@@ -1,0 +1,43 @@
+{
+  "name": "Albumlistbot",
+  "description": "A Flask webserver for managing albumlist application mappings",
+  "repository": "https://github.com/Ogreman/albumlistbot",
+  "keywords": [
+    "python", 
+    "flask", 
+    "slack", 
+    "bandcamp", 
+    "albums", 
+  ],
+  "scripts": {
+    "postdeploy": "python create_tables.py"
+  },
+  "success_url": "/api/mappings",
+  "env": {
+    "APP_SETTINGS": {
+        "description": "Which config class of settings to use (see: config.py).",
+        "value": "config.StagingConfig",
+        "required": false
+    },
+    "SECRET_KEY": {
+        "description": "A secret key for verifying magic Flask stuff.",
+        "generator": "secret"
+    }
+  },
+  "formation": {
+    "web": {
+        "quantity": 1,
+        "size": "free"
+    }
+  },
+  "image": "heroku/python",
+  "stack": "container",
+  "addons": [
+    {
+      "plan": "heroku-postgresql",
+      "options": {
+        "version": "9.5"
+      }
+    }
+  ]
+}
