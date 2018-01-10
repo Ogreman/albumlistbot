@@ -1,4 +1,5 @@
 import functools
+import logging
 import re
 from urllib.parse import urljoin
 
@@ -23,7 +24,7 @@ def slack_check(func):
     def wraps(*args, **kwargs):
         if flask.request.form.get('token', '') in slack_blueprint.config['APP_TOKENS'] or slack_blueprint.config['DEBUG']:
             return func(*args, **kwargs)
-        print('[access]: failed slack-check test')
+        flask.current_app.logger.warn('[access]: failed slack-check test')
         flask.abort(403)
     return wraps
 
@@ -39,12 +40,12 @@ def register():
     team_id = form_data['team_id']
     try:
         app_url = scrape_links_from_text(form_data['text'])[0]
-        print(f'[router]: registering {team_id} with {app_url}')
+        flask.current_app.logger.info(f'[router]: registering {team_id} with {app_url}')
         mapping.add_mapping(team_id, app_url)
     except IndexError:
         return 'Provide an URL for your Albumlist', 200
     except DatabaseError as e:
-        print(f'[db]: {e}')
+        flask.current_app.logger.error(f'[db]: {e}')
         return 'Team already registered', 200
     return 'Registered your Slack team with your Albumlist', 200
 
@@ -57,7 +58,7 @@ def delete():
     try:
         mapping.delete_from_mapping(team_id)
     except DatabaseError as e:
-        print(f'[db]: {e}')
+        flask.current_app.logger.error(f'[db]: {e}')
         return '', 200
     return 'Removed mapping for your Slack team', 200
 
@@ -71,13 +72,13 @@ def route_to_app():
     try:
         app_url = mapping.get_app_url_for_team(team_id)
     except DatabaseError as e:
-        print(f'[db]: {e}')
+        flask.current_app.logger.error(f'[db]: {e}')
         return 'Failed', 200
     full_url = f'{urljoin(app_url, "slack")}/{uri}'
-    print(f'[router]: connecting {team_id} to {full_url}...')
+    flask.current_app.logger.info(f'[router]: connecting {team_id} to {full_url}...')
     response = requests.post(full_url, data=form_data)
     if not response.ok:
-        print(f'[router]: connection error for {team_id} to {full_url}: {response.status_code}')
+        flask.current_app.logger.error(f'[router]: connection error for {team_id} to {full_url}: {response.status_code}')
         return 'Failed', 200
     try:
         return flask.jsonify(response.json()), 200
@@ -96,13 +97,13 @@ def route_events_to_app():
     try:
         app_url = mapping.get_app_url_for_team(team_id)
     except DatabaseError as e:
-        print(f'[db]: {e}')
+        flask.current_app.logger.error(f'[db]: {e}')
         return '', 200
     full_url = urljoin(app_url, 'slack/events')
-    print(f'[router]: connecting {team_id} to {full_url}...')
+    flask.current_app.logger.info(f'[router]: connecting {team_id} to {full_url}...')
     response = requests.post(full_url, json=json_data)
     if not response.ok:
-        print(f'[router]: connection error to {full_url}: {response.status_code}')
+        flask.current_app.logger.error(f'[router]: connection error to {full_url}: {response.status_code}')
     return '', 200
 
 
@@ -114,5 +115,5 @@ def auth():
     client_secret = slack_blueprint.config['SLACK_CLIENT_SECRET']
     url = constants.SLACK_AUTH_URL.format(code=code, client_id=client_id, client_secret=client_secret)
     response = requests.get(url)
-    print(f'[auth]: {response.json()}')
+    flask.current_app.logger.info(f'[auth]: {response.json()}')
     return response.content, 200

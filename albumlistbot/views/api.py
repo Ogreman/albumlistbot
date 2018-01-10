@@ -1,4 +1,5 @@
 import flask
+import logging
 
 from albumlistbot.models import DatabaseError
 from albumlistbot.models import mapping
@@ -21,8 +22,8 @@ def api_mappings():
     try:
         return flask.jsonify(mapping.get_mappings()), 200
     except DatabaseError as e:
-        print('[db]: failed to get mappings')
-        print(f'[db]: {e}')
+        flask.current_app.logger.error('[db]: failed to get mappings')
+        flask.current_app.logger.error(f'[db]: {e}')
         return flask.jsonify({'text': 'failed'}), 500
 
 
