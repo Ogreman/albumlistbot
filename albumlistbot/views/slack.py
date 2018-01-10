@@ -1,4 +1,5 @@
 import functools
+import json
 import logging
 import re
 from urllib.parse import urljoin
@@ -22,9 +23,9 @@ def slack_check(func):
     """
     @functools.wraps(func)
     def wraps(*args, **kwargs):
-        if flask.request.form.get('token', '') in slack_blueprint.config['APP_TOKENS'] or slack_blueprint.config['DEBUG']:
+        if 'payload' in flask.request.form or flask.request.form.get('token', '') in slack_blueprint.config['APP_TOKENS'] or slack_blueprint.config['DEBUG']:
             return func(*args, **kwargs)
-        flask.current_app.logger.warn('[access]: failed slack-check test')
+        flask.current_app.logger.error('[access]: failed slack-check test')
         flask.abort(403)
     return wraps
 
@@ -68,7 +69,11 @@ def delete():
 def route_to_app():
     form_data = flask.request.form
     uri = flask.request.args['uri']
-    team_id = form_data['team_id']
+    if 'payload' in form_data:
+        json_data = json.loads(form_data['payload'])
+        team_id = json_data['team']['id']
+    else:
+        team_id = form_data['team_id']
     try:
         app_url = mapping.get_app_url_for_team(team_id)
     except DatabaseError as e:
