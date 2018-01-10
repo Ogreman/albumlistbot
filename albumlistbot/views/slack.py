@@ -60,7 +60,7 @@ def route_to_app():
     app_url = mapping.get_app_url_for_team(team_id)
     full_url = f'{urljoin(app_url, "slack")}/{uri}'
     response = requests.post(full_url, data=form_data)
-    return flask.jsonify(response.json()), 200
+    return flask.jsonify(response.json() or response.text), 200
 
 
 @slack_blueprint.route('/route/events', methods=['POST'])
