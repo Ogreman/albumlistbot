@@ -42,5 +42,5 @@ def route_to_app():
     uri = flask.request.args['uri']
     team_id = form_data['team_id']
     app_url = mapping.get_app_url_for_team(team_id)
-    full_url = urljoin(app_url, uri)
+    full_url = urljoin(urljoin(app_url, 'slack'), uri)
     return requests.post(full_url, data=form_data).text, 200
