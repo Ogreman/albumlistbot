@@ -70,7 +70,7 @@ def route_events_to_app():
     request_type = json_data['type']
     if request_type == 'url_verification':
         return flask.jsonify({'challenge': json_data['challenge']})
-    team_id = form_data['team_id']
+    team_id = json_data['team_id']
     app_url = mapping.get_app_url_for_team(team_id)
     full_url = urljoin(app_url, 'slack/events')
     requests.post(full_url, json=json_data)
