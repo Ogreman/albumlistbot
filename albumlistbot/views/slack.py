@@ -39,6 +39,7 @@ def register():
     team_id = form_data['team_id']
     try:
         app_url = scrape_links_from_text(form_data['text'])[0]
+        print(f'[router]: registering {team_id} with {app_url}')
         mapping.add_mapping(team_id, app_url)
     except IndexError:
         return 'Provide an URL for your Albumlist', 200
@@ -73,9 +74,10 @@ def route_to_app():
         print(f'[db]: {e}')
         return 'Failed', 200
     full_url = f'{urljoin(app_url, "slack")}/{uri}'
+    print(f'[router]: connecting {team_id} to {full_url}...')
     response = requests.post(full_url, data=form_data)
     if not response.ok:
-        print(f'[router]: connection error to {full_url}: {response.status_code}')
+        print(f'[router]: connection error for {team_id} to {full_url}: {response.status_code}')
         return 'Failed', 200
     try:
         return flask.jsonify(response.json()), 200
@@ -97,6 +99,7 @@ def route_events_to_app():
         print(f'[db]: {e}')
         return '', 200
     full_url = urljoin(app_url, 'slack/events')
+    print(f'[router]: connecting {team_id} to {full_url}...')
     response = requests.post(full_url, json=json_data)
     if not response.ok:
         print(f'[router]: connection error to {full_url}: {response.status_code}')
