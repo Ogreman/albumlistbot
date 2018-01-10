@@ -37,8 +37,14 @@ def scrape_links_from_text(text):
 def register():
     form_data = flask.request.form
     team_id = form_data['team_id']
-    app_url = scrape_links_from_text(form_data['text'])[0]
-    mapping.add_mapping(team_id, app_url)
+    try:
+        app_url = scrape_links_from_text(form_data['text'])[0]
+        mapping.add_mapping(team_id, app_url)
+    except IndexError:
+        return 'Provide an URL for your Albumlist', 200
+    except DatabaseError as e:
+        print(f'[db]: {e}')
+        return 'Team already registered', 200
     return 'Registered your Slack team with your Albumlist', 200
 
 
@@ -47,7 +53,11 @@ def register():
 def delete():
     form_data = flask.request.form
     team_id = form_data['team_id']
-    mapping.delete_from_mapping(team_id)
+    try:
+        mapping.delete_from_mapping(team_id)
+    except DatabaseError as e:
+        print(f'[db]: {e}')
+        return '', 200
     return 'Removed mapping for your Slack team', 200
 
 
@@ -57,9 +67,16 @@ def route_to_app():
     form_data = flask.request.form
     uri = flask.request.args['uri']
     team_id = form_data['team_id']
-    app_url = mapping.get_app_url_for_team(team_id)
+    try:
+        app_url = mapping.get_app_url_for_team(team_id)
+    except DatabaseError as e:
+        print(f'[db]: {e}')
+        return 'Failed', 200
     full_url = f'{urljoin(app_url, "slack")}/{uri}'
     response = requests.post(full_url, data=form_data)
+    if not response.ok:
+        print(f'[router]: connection error to {full_url}: {response.status_code}')
+        return 'Failed', 200
     try:
         return flask.jsonify(response.json()), 200
     except ValueError:
@@ -74,9 +91,15 @@ def route_events_to_app():
     if request_type == 'url_verification':
         return flask.jsonify({'challenge': json_data['challenge']})
     team_id = json_data['team_id']
-    app_url = mapping.get_app_url_for_team(team_id)
+    try:
+        app_url = mapping.get_app_url_for_team(team_id)
+    except DatabaseError as e:
+        print(f'[db]: {e}')
+        return '', 200
     full_url = urljoin(app_url, 'slack/events')
-    requests.post(full_url, json=json_data)
+    response = requests.post(full_url, json=json_data)
+    if not response.ok:
+        print(f'[router]: connection error to {full_url}: {response.status_code}')
     return '', 200
 
 
