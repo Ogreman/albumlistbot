@@ -114,8 +114,9 @@ def route_to_app():
 
 
 @slack_blueprint.route('/route/events', methods=['POST'])
-@slack_check
 def route_events_to_app():
+    if int(flask.request.headers.get('X-Slack-Retry-Num', 0)) > 1:
+        return '', 200
     json_data = flask.request.json
     request_type = json_data['type']
     if request_type == 'url_verification':
