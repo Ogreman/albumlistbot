@@ -47,6 +47,8 @@ def get_app_url_for_team(team):
             return cur.fetchone()[0]
         except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
             raise DatabaseError(e)
+        except (IndexError, TypeError):
+            return
 
 
 def add_mapping(team, app_url):
