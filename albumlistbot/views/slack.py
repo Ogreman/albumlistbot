@@ -96,6 +96,8 @@ def route_to_app():
         team_id = form_data['team_id']
     try:
         app_url = mapping.get_app_url_for_team(team_id)
+        if not app_url:
+            return 'Failed (use /register [url] first to use Albumlist commands)'
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
         return 'Failed', 200
