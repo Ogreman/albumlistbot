@@ -41,27 +41,45 @@ def register():
     team_id = form_data['team_id']
     try:
         app_url = scrape_links_from_text(form_data['text'])[0]
-        flask.current_app.logger.info(f'[router]: registering {team_id} with {app_url}')
-        mapping.add_mapping(team_id, app_url)
     except IndexError:
-        return 'Provide an URL for your Albumlist', 200
+        return 'Provide an URL for the Albumlist', 200
+    flask.current_app.logger.info(f'[router]: registering {team_id} with {app_url}')
+    admin_url = urljoin(app_url, 'slack/admin/check')
+    flask.current_app.logger.info(f'[router]: performing admin check at {admin_url}...')
+    response = requests.post(admin_url, data=form_data)
+    if not response.ok:
+        flask.current_app.logger.error(f'[router]: connection error for {team_id} to {admin_url}: {response.status_code}')
+        if response.status_code == 403:
+            return 'Not authorised', 200
+        return 'Failed (check the Albumlist is running and up to date)', 200
+    try:
+        mapping.add_mapping(team_id, app_url)
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
-        return 'Team already registered', 200
-    return 'Registered your Slack team with your Albumlist', 200
+        return 'Team already registered (use /unregister first to change)', 200
+    return 'Registered your Slack team with the provided Albumlist', 200
 
 
-@slack_blueprint.route('/delete', methods=['POST'])
+@slack_blueprint.route('/unregister', methods=['POST'])
 @slack_check
-def delete():
+def unregister():
     form_data = flask.request.form
     team_id = form_data['team_id']
+    app_url = mapping.get_app_url_for_team(team_id)
+    admin_url = urljoin(app_url, 'slack/admin/check')
+    flask.current_app.logger.info(f'[router]: performing admin check at {admin_url}...')
+    response = requests.post(admin_url, data=form_data)
+    if not response.ok:
+        flask.current_app.logger.error(f'[router]: connection error for {team_id} to {admin_url}: {response.status_code}')
+        if response.status_code == 403:
+            return 'Not authorised', 200
+        return 'Failed (check the Albumlist is running and up to date)', 200
     try:
         mapping.delete_from_mapping(team_id)
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
         return '', 200
-    return 'Removed mapping for your Slack team', 200
+    return 'Unregistered the Albumlist for your Slack team', 200
 
 
 @slack_blueprint.route('/route', methods=['POST'])
