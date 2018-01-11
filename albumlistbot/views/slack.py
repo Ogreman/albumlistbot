@@ -39,6 +39,8 @@ def scrape_links_from_text(text):
 def register():
     form_data = flask.request.form
     team_id = form_data['team_id']
+    if mapping.get_app_url_for_team(team_id):
+        return 'Team already registered (use /unregister first to change)'
     try:
         app_url = scrape_links_from_text(form_data['text'])[0]
     except IndexError:
