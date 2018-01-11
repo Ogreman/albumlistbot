@@ -97,7 +97,7 @@ def route_to_app():
     try:
         app_url = mapping.get_app_url_for_team(team_id)
         if not app_url:
-            return 'Failed (use /register [url] first to use Albumlist commands)'
+            return 'Failed (use /register [url] first to use Albumlist commands)', 200
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
         return 'Failed', 200
@@ -123,6 +123,8 @@ def route_events_to_app():
     team_id = json_data['team_id']
     try:
         app_url = mapping.get_app_url_for_team(team_id)
+        if not app_url:
+            return '', 200
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
         return '', 200
