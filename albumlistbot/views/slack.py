@@ -137,7 +137,6 @@ def route_events_to_app():
 
 
 @slack_blueprint.route('/auth', methods=['GET'])
-@slack_check
 def auth():
     code = flask.request.args.get('code')
     client_id = slack_blueprint.config['SLACK_CLIENT_ID']
