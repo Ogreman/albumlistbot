@@ -24,7 +24,7 @@ def slack_check(func):
     """
     @functools.wraps(func)
     def wraps(*args, **kwargs):
-        if 'payload' in flask.request.form or flask.request.form.get('token', '') in slack_blueprint.config['APP_TOKENS'] or slack_blueprint.config['DEBUG']:
+        if 'payload' in flask.request.form or flask.request.form.get('token', '') == slack_blueprint.config['APP_TOKEN'] or slack_blueprint.config['DEBUG']:
             return func(*args, **kwargs)
         flask.current_app.logger.error('[access]: failed slack-check test')
         flask.abort(403)
@@ -47,7 +47,7 @@ def create_new_albumlist(team_id):
     url = urljoin(slack_blueprint.config['HEROKU_API_URL'], 'app-setups')
     headers = slack_blueprint.config['HEROKU_HEADERS']
     source = f'{slack_blueprint.config["ALBUMLIST_GIT_URL"]}/tarball/master/'
-    app_token = slack_blueprint.config['APP_TOKEN_SELF']
+    app_token = slack_blueprint.config['APP_TOKEN']
     payload = {'source_blob': { 'url': source }, 'overrides': {'env': { 'APP_TOKEN_BOT': app_token } } }
     response = requests.post(url, headers=headers, json=payload)
     if response.ok:
@@ -239,7 +239,7 @@ def route_events_to_app():
     request_type = json_data['type']
     if request_type == 'url_verification':
         return flask.jsonify({'challenge': json_data['challenge']})
-    if json_data['token'] not in slack_blueprint.config['APP_TOKENS']:
+    if json_data['token'] != slack_blueprint.config['APP_TOKEN']:
         return '', 200
     team_id = json_data['team_id']
     try:
@@ -280,5 +280,5 @@ def auth():
             flask.current_app.logger.error(f'[db]: {e}')
             return 'Failed to add team', 500
         flask.current_app.logger.info(f'[router]: added {team_id} with {access_token}')
-        return flask.redirect(f'https://{response_json["team_name"].strip()}.slack.com')
+        return 'OK', 200
     return 'Failed', 500
