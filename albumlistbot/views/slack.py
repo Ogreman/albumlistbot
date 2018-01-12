@@ -274,4 +274,5 @@ def auth():
             flask.current_app.logger.error(f'[db]: {e}')
             return 'Failed to add team', 500
         flask.current_app.logger.info(f'[router]: added {team_id} with {access_token}')
-    return response.content, 200
+        return flask.redirect(f'https://{response_json['team_name']}.slack.com')
+    return 'Failed', 500
