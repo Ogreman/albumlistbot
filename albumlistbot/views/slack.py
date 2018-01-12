@@ -132,7 +132,7 @@ def check_albumlist():
             app_url = f'https://{app}.herokuapp.com'
             flask.current_app.logger.info(f'[router]: registering {team_id} with {app_url}')
             try:
-                mapping.set_mapping(team_id, app_url)
+                mapping.set_mapping_for_team(team_id, app_url)
             except DatabaseError as e:
                 flask.current_app.logger.error(f'[db]: {e}')
                 return 'Failed. Try running /check_albumlist again', 200
@@ -204,7 +204,7 @@ def route_to_app():
                     flask.current_app.logger.error(f'[db]: {e}')
                     return 'Failed', 200
                 return 'Creating new albumlist...', 200
-            return '', 200
+            return 'OK', 200
     else:
         team_id = form_data['team_id']
     try:
