@@ -85,7 +85,7 @@ def unregister():
 @slack_blueprint.route('/route', methods=['POST'])
 @slack_check
 def route_to_app():
-    form_data = flask.request.form
+    form_data = flask.request.form.copy()
     uri = flask.request.args['uri']
     if 'payload' in form_data:
         json_data = json.loads(form_data['payload'])
@@ -117,7 +117,7 @@ def route_to_app():
 def route_events_to_app():
     if int(flask.request.headers.get('X-Slack-Retry-Num', 0)) > 1:
         return '', 200
-    json_data = flask.request.json
+    json_data = flask.request.json.copy()
     request_type = json_data['type']
     if request_type == 'url_verification':
         return flask.jsonify({'challenge': json_data['challenge']})
