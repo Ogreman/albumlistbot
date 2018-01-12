@@ -35,6 +35,24 @@ def get_mappings():
             raise DatabaseError(e)
 
 
+def team_exists(team):
+    sql = """
+        SELECT *
+        FROM mapping
+        WHERE team = %s;
+    """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (team,))
+            cur.fetchone()[0]
+            return True
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+        except (IndexError, TypeError):
+            return False
+
+
 def get_app_url_for_team(team):
     sql = """
         SELECT app
@@ -108,6 +126,21 @@ def set_mapping_for_team(team, app_url):
         try:
             cur = conn.cursor()
             cur.execute(sql, (app_url, team))
+            conn.commit()
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+
+
+def set_token_for_team(team, token):
+    sql = """
+        UPDATE mapping
+        SET token = %s
+        WHERE team = %s;
+        """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (token, team))
             conn.commit()
         except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
             raise DatabaseError(e)

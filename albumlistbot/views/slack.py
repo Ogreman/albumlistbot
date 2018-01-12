@@ -269,7 +269,10 @@ def auth():
         team_id = response_json['team_id']
         access_token = response_json['access_token']
         try:
-            mapping.add_team(team_id, access_token)
+            if mapping.team_exists(team_id):
+                mapping.set_token_for_team(team_id, access_token)
+            else:
+                mapping.add_team(team_id, access_token)
         except DatabaseError as e:
             flask.current_app.logger.error(f'[db]: {e}')
             return 'Failed to add team', 500
