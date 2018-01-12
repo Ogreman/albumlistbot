@@ -57,7 +57,7 @@ def create_new_albumlist(team_id):
     flask.current_app.logger.error(f'[router]: failed to create new albumlist for {team_id}: {response.status_code}')
 
 
-@slack_blueprint.route('/create_list', methods=['GET'])
+@slack_blueprint.route('/create_list', methods=['POST'])
 @slack_check
 def create_list():
     form_data = flask.request.form
