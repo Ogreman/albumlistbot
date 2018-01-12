@@ -107,7 +107,7 @@ def set_mapping_for_team(team, app_url):
     with closing(get_connection()) as conn:
         try:
             cur = conn.cursor()
-            cur.execute(sql, (team, app_url))
+            cur.execute(sql, (app_url, team))
             conn.commit()
         except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
             raise DatabaseError(e)
