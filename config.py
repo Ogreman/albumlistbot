@@ -10,7 +10,7 @@ class Config(object):
     HEROKU_API_URL = 'https://api.heroku.com'
     HEROKU_HEADERS = {
         'Accept': 'application/vnd.heroku+json; version=3',
-        'Authorization': f'{HEROKU_TOKEN}'
+        'Authorization': f'Bearer {HEROKU_TOKEN}'
     }
     ALBUMLIST_GIT_URL = os.environ.get('ALBUMLIST_GIT_URL')
     SLACK_CLIENT_ID = os.environ.get('SLACK_CLIENT_ID')
