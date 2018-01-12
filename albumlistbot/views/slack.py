@@ -39,8 +39,6 @@ def scrape_links_from_text(text):
 def register():
     form_data = flask.request.form
     team_id = form_data['team_id']
-    if mapping.get_app_url_for_team(team_id):
-        return 'Team already registered (use /unregister first to change)'
     try:
         app_url = scrape_links_from_text(form_data['text'])[0]
     except IndexError:
@@ -55,10 +53,10 @@ def register():
             return 'Not authorised', 200
         return 'Failed (check the Albumlist is running and up to date)', 200
     try:
-        mapping.add_mapping(team_id, app_url)
+        mapping.set_mapping_for_team(team_id, app_url)
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
-        return 'Team already registered (use /unregister first to change)', 200
+        return 'Team not authed or already registered', 200
     return 'Registered your Slack team with the provided Albumlist', 200
 
 
@@ -81,7 +79,7 @@ def unregister():
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
         return '', 200
-    return 'Unregistered the Albumlist for your Slack team', 200
+    return 'Unregistered the Albumlist for your Slack team (re-add albumlistbot to Slack to use again)', 200
 
 
 @slack_blueprint.route('/route', methods=['POST'])
@@ -95,7 +93,7 @@ def route_to_app():
     else:
         team_id = form_data['team_id']
     try:
-        app_url = mapping.get_app_url_for_team(team_id)
+        app_url, token = mapping.get_app_and_token_for_team(team_id)
         if not app_url:
             return 'Failed (use /register [url] first to use Albumlist commands)', 200
     except DatabaseError as e:
@@ -103,6 +101,8 @@ def route_to_app():
         return 'Failed', 200
     full_url = f'{urljoin(app_url, "slack")}/{uri}'
     flask.current_app.logger.info(f'[router]: connecting {team_id} to {full_url}...')
+    if token:
+        form_data['oauth_token'] = token
     response = requests.post(full_url, data=form_data)
     if not response.ok:
         flask.current_app.logger.error(f'[router]: connection error for {team_id} to {full_url}: {response.status_code}')
@@ -123,7 +123,7 @@ def route_events_to_app():
         return flask.jsonify({'challenge': json_data['challenge']})
     team_id = json_data['team_id']
     try:
-        app_url = mapping.get_app_url_for_team(team_id)
+        app_url, token = mapping.get_app_and_token_for_team(team_id)
         if not app_url:
             return '', 200
     except DatabaseError as e:
@@ -131,6 +131,8 @@ def route_events_to_app():
         return '', 200
     full_url = urljoin(app_url, 'slack/events')
     flask.current_app.logger.info(f'[router]: connecting {team_id} to {full_url}...')
+    if token:
+        json_data['oauth_token'] = token
     response = requests.post(full_url, json=json_data)
     if not response.ok:
         flask.current_app.logger.error(f'[router]: connection error to {full_url}: {response.status_code}')
@@ -144,5 +146,15 @@ def auth():
     client_secret = slack_blueprint.config['SLACK_CLIENT_SECRET']
     url = constants.SLACK_AUTH_URL.format(code=code, client_id=client_id, client_secret=client_secret)
     response = requests.get(url)
-    flask.current_app.logger.info(f'[auth]: {response.json()}')
+    response_json = response.json()
+    flask.current_app.logger.info(f'[auth]: {response_json}')
+    if response_json.get('ok'):
+        team_id = response_json['team_id']
+        access_token = response_json['access_token']
+        try:
+            mapping.add_team(team_id, access_token)
+        except DatabaseError as e:
+            flask.current_app.logger.error(f'[db]: {e}')
+            return 'Failed to add team', 500
+        flask.current_app.logger.info(f'[router]: added {team_id} with {access_token}')
     return response.content, 200

@@ -10,7 +10,8 @@ def create_mapping_table():
     sql = """
         CREATE TABLE mapping (
         team varchar UNIQUE,
-        app varchar UNIQUE
+        app varchar DEFAULT '',
+        token varchar DEFAULT ''
         );"""
     with closing(get_connection()) as conn:
         try:
@@ -51,16 +52,63 @@ def get_app_url_for_team(team):
             return
 
 
-def add_mapping(team, app_url):
+def get_token_for_team(team):
     sql = """
-        INSERT INTO mapping (team, app) VALUES (%s, %s);"""
+        SELECT token
+        FROM mapping
+        WHERE team = %s;
+    """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (team,))
+            return cur.fetchone()[0]
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+        except (IndexError, TypeError):
+            return
+
+
+def get_app_and_token_for_team(team):
+    sql = """
+        SELECT app, token
+        FROM mapping
+        WHERE team = %s;
+    """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (team,))
+            return cur.fetchone()
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+
+
+def add_team(team, token):
+    sql = """
+        INSERT INTO mapping (team, token) VALUES (%s, %s);"""
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (team, token))
+            conn.commit()
+        except psycopg2.IntegrityError:
+            raise DatabaseError(f'mapping already exists for {team}')
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+
+
+def set_mapping_for_team(team, app_url):
+    sql = """
+        UPDATE mapping
+        SET app = %s
+        WHERE team = %s;
+        """
     with closing(get_connection()) as conn:
         try:
             cur = conn.cursor()
             cur.execute(sql, (team, app_url))
             conn.commit()
-        except psycopg2.IntegrityError:
-            raise DatabaseError(f'mapping already exists for {team} -> {app_url}')
         except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
             raise DatabaseError(e)
 
