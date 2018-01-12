@@ -52,7 +52,7 @@ def create_new_albumlist(team_id):
     if response.ok:
         response_json = response.json()
         app_name = response_json['app']['name']
-        flask.current_app.info(f'[router]: created {app_name}')
+        flask.current_app.logger.info(f'[router]: created {app_name}')
         return app_name
     flask.current_app.logger.error(f'[router]: failed to create new albumlist for {team_id}: {response.status_code}')
 
