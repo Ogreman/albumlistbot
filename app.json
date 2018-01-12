@@ -22,6 +22,14 @@
     "SECRET_KEY": {
         "description": "A secret key for verifying magic Flask stuff.",
         "generator": "secret"
+    },
+    "HEROKU_TOKEN": {
+        "description": "Used to create new albumlists on Heroku PaaS.",
+        "value": "change-me"
+    },
+    "HEROKU_GIT_URL": {
+        "description": "The albumlist repository.",
+        "value": "https://github.com/Ogreman/albumlist"
     }
   },
   "formation": {
