@@ -48,7 +48,18 @@ def create_new_albumlist(team_id):
     headers = slack_blueprint.config['HEROKU_HEADERS']
     source = f'{slack_blueprint.config["ALBUMLIST_GIT_URL"]}/tarball/master/'
     app_token = slack_blueprint.config['APP_TOKEN']
-    payload = {'source_blob': { 'url': source }, 'overrides': {'env': { 'APP_TOKEN_BOT': app_token } } }
+    payload = {
+        'app': {
+            'region': 'eu',
+            'stack': 'container',
+        },
+        'source_blob': {
+            'url': source
+        },
+        'overrides': {
+            'env': { 'APP_TOKEN_BOT': app_token }
+        }
+    }
     response = requests.post(url, headers=headers, json=payload)
     if response.ok:
         response_json = response.json()
