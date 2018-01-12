@@ -49,7 +49,7 @@ def create_new_albumlist(team_id):
     source = f'{slack_blueprint.config["ALBUMLIST_GIT_URL"]}/tarball/master/'
     payload = {'source_blob': { 'url': source } }
     response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 201:
+    if response.ok:
         response_json = response.json()
         app_name = response_json['app']['name']
         flask.current_app.info(f'[router]: created {app_name}')
