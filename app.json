@@ -30,6 +30,10 @@
     "HEROKU_GIT_URL": {
         "description": "The albumlist repository.",
         "value": "https://github.com/Ogreman/albumlist"
+    },
+    "APP_TOKEN_SELF": {
+        "description": "This bot's validation token from Slack.",
+        "value": "change-me"
     }
   },
   "formation": {

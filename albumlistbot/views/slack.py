@@ -47,7 +47,8 @@ def create_new_albumlist(team_id):
     url = urljoin(slack_blueprint.config['HEROKU_API_URL'], 'app-setups')
     headers = slack_blueprint.config['HEROKU_HEADERS']
     source = f'{slack_blueprint.config["ALBUMLIST_GIT_URL"]}/tarball/master/'
-    payload = {'source_blob': { 'url': source } }
+    app_token = slack_blueprint.config['APP_TOKEN_SELF']
+    payload = {'source_blob': { 'url': source }, 'overrides': {'env': { 'APP_TOKEN_BOT': app_token } } }
     response = requests.post(url, headers=headers, json=payload)
     if response.ok:
         response_json = response.json()
@@ -238,6 +239,8 @@ def route_events_to_app():
     request_type = json_data['type']
     if request_type == 'url_verification':
         return flask.jsonify({'challenge': json_data['challenge']})
+    if json_data['token'] not in slack_blueprint.config['APP_TOKENS']:
+        return '', 200
     team_id = json_data['team_id']
     try:
         app_url, token = mapping.get_app_and_token_for_team(team_id)
@@ -277,5 +280,5 @@ def auth():
             flask.current_app.logger.error(f'[db]: {e}')
             return 'Failed to add team', 500
         flask.current_app.logger.info(f'[router]: added {team_id} with {access_token}')
-        return flask.redirect(f'https://{response_json["team_name"]}.slack.com')
+        return flask.redirect(f'https://{response_json["team_name"].strip()}.slack.com')
     return 'Failed', 500
