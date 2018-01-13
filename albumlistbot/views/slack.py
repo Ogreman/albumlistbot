@@ -42,7 +42,7 @@ def scrape_links_from_text(text):
     return [url for url in re.findall(constants.URL_REGEX, text)]
 
 
-def create_new_albumlist(team_id):
+def create_new_albumlist(team_id, oauth_token):
     flask.current_app.logger.info(f'[router]: creating a new albumlist for {team_id}...')
     url = urljoin(slack_blueprint.config['HEROKU_API_URL'], 'app-setups')
     headers = slack_blueprint.config['HEROKU_HEADERS']
@@ -54,11 +54,14 @@ def create_new_albumlist(team_id):
             'stack': 'container',
         },
         'source_blob': {
-            'url': source
+            'url': source,
         },
         'overrides': {
-            'env': { 'APP_TOKEN_BOT': app_token }
-        }
+            'env': {
+                'APP_TOKEN_BOT': app_token,
+                'SLACK_OAUTH_TOKEN': oauth_token,
+            },
+        },
     }
     response = requests.post(url, headers=headers, json=payload)
     if response.ok:
@@ -81,7 +84,7 @@ def create_list():
     if not is_slack_admin(token, user_id):
         return 'Not authorised', 200
     if not app_url:
-        app_name = create_new_albumlist(team_id)
+        app_name = create_new_albumlist(team_id, token)
         if not app_name:
             return 'Failed', 200
         try:
@@ -212,9 +215,12 @@ def route_to_app():
         team_id = json_data['team']['id']
         if json_data['callback_id'] == f'create_list_{team_id}':
             if 'yes' in json_data['actions'][0]['name']:
-                app_name = create_new_albumlist(team_id)
+                token = mapping.get_token_for_team(team_id)
+                if not token:
+                    return 'Team not authorised', 200
+                app_name = create_new_albumlist(team_id, token)
                 if not app_name:
-                    'Failed', 200
+                    return 'Failed', 200
                 try:
                     mapping.set_mapping_for_team(team_id, app_name)
                 except DatabaseError as e:
