@@ -132,7 +132,12 @@ def check_albumlist():
     if not app:
         return 'No albumlist mapped to this team (admins: use /create_albumlist to get started)'
     if scrape_links_from_text(app):
-        return 'OK', 200
+        flask.current_app.logger.info(f'[router]: checking connection to {app} for {team_id}')
+        response = requests.head(app)
+        if response.ok:
+            return 'OK', 200
+        flask.current_app.logger.info(f'[router]: connection to {app} failed: {response.status_code}')
+        return f'Failed ({response.status_code})'
     url = urljoin(slack_blueprint.config['HEROKU_API_URL'], f'apps/{app}/dynos')
     headers = slack_blueprint.config['HEROKU_HEADERS']
     flask.current_app.logger.info(f'[router]: checking status of {app} dynos for {team_id}')
