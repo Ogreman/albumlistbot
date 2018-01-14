@@ -100,7 +100,10 @@ def create_list():
     form_data = flask.request.form
     team_id = form_data['team_id']
     user_id = form_data['user_id']
-    app_url, token = mapping.get_app_and_token_for_team(team_id)
+    try:
+        app_url, token = mapping.get_app_and_token_for_team(team_id)
+    except TypeError:
+        return 'Team not authorised', 200
     if not token:
         return 'Team not authorised', 200
     if not is_slack_admin(token, user_id):
