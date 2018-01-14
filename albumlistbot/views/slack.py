@@ -225,6 +225,32 @@ def remove_mapping():
         return 'Team not authorised', 200
     if not is_slack_admin(token, user_id):
         return 'Not authorised', 200
+    if app_url:
+        attachment = {
+            'fallback': 'Remove existing list?',
+            'title': 'Remove existing list?',
+            'callback_id': f'delete_list_{team_id}',
+            'actions': [
+                {
+                    'name': 'yes',
+                    'text': 'Yes',
+                    'type': 'button',
+                    'value': team_id,
+                },
+                {
+                    'name': 'no',
+                    'text': 'No',
+                    'type': 'button',
+                    'value': team_id,
+                }
+            ],
+        }
+        response = {
+            'response_type': 'ephemeral',
+            'text': 'Warning! Your albumlist will be removed...',
+            'attachments': [attachment],
+        }
+        return flask.jsonify(response), 200
     try:
         mapping.delete_from_mapping(team_id)
     except DatabaseError as e:
@@ -255,6 +281,16 @@ def route_to_app():
                     flask.current_app.logger.error(f'[db]: {e}')
                     return 'Failed', 200
                 return 'Creating new albumlist...', 200
+            return 'OK', 200
+        elif json_data['callback_id'] == f'delete_list_{team_id}':
+            if 'yes' in json_data['actions'][0]['name']:
+                try:
+                    mapping.delete_from_mapping(team_id)
+                    flask.current_app.logger.info(f'[router]: deleted mapping for {team_id}')
+                except DatabaseError as e:
+                    flask.current_app.logger.error(f'[db]: {e}')
+                    return 'Failed', 200
+                return 'Unregistered the Albumlist for your Slack team (re-add albumlistbot to Slack to use again)', 200
             return 'OK', 200
     else:
         team_id = form_data['team_id']
