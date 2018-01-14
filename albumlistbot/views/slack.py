@@ -44,7 +44,7 @@ def is_managed(app_url_or_name, session=requests):
     flask.current_app.logger.info(f'[router]: checking if {app_url_or_name} is managed by us...')
     url = f"{urljoin(slack_blueprint.config['HEROKU_API_URL'], 'apps')}/{app_url_or_name}"
     headers = slack_blueprint.config['HEROKU_HEADERS']
-    response = session.get(url, headers=headers)
+    response = session.get(url, headers=headers, timeout=1.5)
     return response.ok
 
 
@@ -161,18 +161,24 @@ def check_albumlist():
         return 'No albumlist mapped to this team (admins: use /create_albumlist to get started)'
     if scrape_links_from_text(app):
         flask.current_app.logger.info(f'[router]: checking connection to {app} for {team_id}')
-        response = requests.head(app)
+        try:
+            response = requests.head(app, timeout=2.0)
+        except requests.exceptions.Timeout:
+            return 'The connection to the albumlist timed out', 200
         if response.ok:
             return 'OK', 200
         flask.current_app.logger.info(f'[router]: connection to {app} failed: {response.status_code}')
         return f'Failed ({response.status_code})'
-    with requests.Session() as s:
-        if not is_managed(app, session=s):
-            return 'Failed (unknown app)'
-        url = urljoin(slack_blueprint.config['HEROKU_API_URL'], f'apps/{app}/dynos')
-        headers = slack_blueprint.config['HEROKU_HEADERS']
-        flask.current_app.logger.info(f'[router]: checking status of {app} dynos for {team_id}')
-        response = s.get(url, headers=headers)
+    try:
+        with requests.Session() as s:
+            if not is_managed(app, session=s):
+                return 'Failed (unknown app)'
+            url = urljoin(slack_blueprint.config['HEROKU_API_URL'], f'apps/{app}/dynos')
+            headers = slack_blueprint.config['HEROKU_HEADERS']
+            flask.current_app.logger.info(f'[router]: checking status of {app} dynos for {team_id}')
+            response = s.get(url, headers=headers, timeout=1.5)
+    except requests.exceptions.Timeout:
+        return 'The connection to the albumlist timed out', 200
     if response.ok:
         flask.current_app.logger.info(f'[router]: app is deployed')
         dynos = response.json()
@@ -305,7 +311,10 @@ def route_to_app():
         return 'Failed', 200
     full_url = f'{urljoin(app_url, "slack")}/{uri}'
     flask.current_app.logger.info(f'[router]: connecting {team_id} to {full_url}...')
-    response = requests.post(full_url, data=form_data)
+    try:
+        response = requests.post(full_url, data=form_data, timeout=2.0)
+    except requests.exceptions.Timeout:
+        return 'The connection to the albumlist timed out', 200
     if not response.ok:
         flask.current_app.logger.error(f'[router]: connection error for {team_id} to {full_url}: {response.status_code}')
         return 'Failed', 200
