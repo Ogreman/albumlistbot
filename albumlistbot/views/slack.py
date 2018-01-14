@@ -184,7 +184,7 @@ def check_albumlist():
             except DatabaseError as e:
                 flask.current_app.logger.error(f'[db]: {e}')
                 return 'Failed. Try running /check_albumlist again', 200
-            return 'OK', 200
+            return 'OK (ready)', 200
         return 'In progress...', 200
     flask.current_app.logger.error(f'[router]: failed to check {app} for {team_id}: {response.status_code}')
     return 'Failed. Try running /check_albumlist again', 200
