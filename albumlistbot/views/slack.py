@@ -2,7 +2,7 @@ import functools
 import json
 import logging
 import re
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import flask
 import requests
@@ -70,6 +70,18 @@ def create_new_albumlist(team_id, oauth_token):
         flask.current_app.logger.info(f'[router]: created {app_name}')
         return app_name
     flask.current_app.logger.error(f'[router]: failed to create new albumlist for {team_id}: {response.status_code}')
+
+
+def set_config_variables_for_albumlist(app_url_or_name, config_dict):
+    if scrape_links_from_text(app_url_or_name):
+        app_url_or_name = urlparse(app_url_or_name).hostname.split('.')[0]
+    flask.current_app.logger.info(f'[router]: updating config variables for {app_url_or_name}...')
+    url = f"{urljoin(slack_blueprint.config['HEROKU_API_URL'], 'apps')}/{app_url_or_name}/config-vars"
+    headers = slack_blueprint.config['HEROKU_HEADERS']
+    response = requests.patch(url, headers=headers, json=payload)
+    if response.ok:
+        return
+    flask.current_app.logger.error(f'[router]: failed to update config variables for {app_url_or_name}: {response.status_code}')
 
 
 @slack_blueprint.route('/create_list', methods=['POST'])
@@ -241,8 +253,6 @@ def route_to_app():
         return 'Failed', 200
     full_url = f'{urljoin(app_url, "slack")}/{uri}'
     flask.current_app.logger.info(f'[router]: connecting {team_id} to {full_url}...')
-    if token:
-        form_data['oauth_token'] = token
     response = requests.post(full_url, data=form_data)
     if not response.ok:
         flask.current_app.logger.error(f'[router]: connection error for {team_id} to {full_url}: {response.status_code}')
@@ -273,8 +283,6 @@ def route_events_to_app():
         return '', 200
     full_url = urljoin(app_url, 'slack/events')
     flask.current_app.logger.info(f'[router]: connecting {team_id} to {full_url}...')
-    if token:
-        json_data['oauth_token'] = token
     response = requests.post(full_url, json=json_data)
     if not response.ok:
         flask.current_app.logger.error(f'[router]: connection error to {full_url}: {response.status_code}')
@@ -296,11 +304,18 @@ def auth():
         try:
             if mapping.team_exists(team_id):
                 mapping.set_token_for_team(team_id, access_token)
+                flask.current_app.logger.info(f'[router]: set new token {access_token} for {team_id}')
+                app_url_or_name = mapping.get_app_url_for_team(team_id)
+                if app_url_or_name:
+                    config_dict = {'SLACK_OAUTH_TOKEN': access_token}
+                    set_config_variables_for_albumlist(app_url_or_name, config_dict)
+                    flask.current_app.logger.info(f'[router]: updated albumlist with new access token')
+                return 'OK', 200
             else:
                 mapping.add_team(team_id, access_token)
+                flask.current_app.logger.info(f'[router]: added {team_id} with {access_token}')
+                return 'OK', 200
         except DatabaseError as e:
             flask.current_app.logger.error(f'[db]: {e}')
             return 'Failed to add team', 500
-        flask.current_app.logger.info(f'[router]: added {team_id} with {access_token}')
-        return 'OK', 200
     return 'Failed', 500
