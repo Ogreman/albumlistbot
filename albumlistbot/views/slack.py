@@ -38,11 +38,21 @@ def is_slack_admin(token, user_id):
     return info.body['user']['is_admin']
 
 
+def is_managed(app_url_or_name, session=requests):
+    if scrape_links_from_text(app_url_or_name):
+        app_url_or_name = urlparse(app_url_or_name).hostname.split('.')[0]
+    flask.current_app.logger.info(f'[router]: checking if {app_url_or_name} is managed by us...')
+    url = f"{urljoin(slack_blueprint.config['HEROKU_API_URL'], 'apps')}/{app_url_or_name}"
+    headers = slack_blueprint.config['HEROKU_HEADERS']
+    response = session.get(url, headers=headers)
+    return response.ok
+
+
 def scrape_links_from_text(text):
     return [url for url in re.findall(constants.URL_REGEX, text)]
 
 
-def create_new_albumlist(team_id, oauth_token):
+def create_new_albumlist(team_id, oauth_token, session=requests):
     flask.current_app.logger.info(f'[router]: creating a new albumlist for {team_id}...')
     url = urljoin(slack_blueprint.config['HEROKU_API_URL'], 'app-setups')
     headers = slack_blueprint.config['HEROKU_HEADERS']
@@ -63,7 +73,7 @@ def create_new_albumlist(team_id, oauth_token):
             },
         },
     }
-    response = requests.post(url, headers=headers, json=payload)
+    response = session.post(url, headers=headers, json=payload)
     if response.ok:
         response_json = response.json()
         app_name = response_json['app']['name']
@@ -72,13 +82,13 @@ def create_new_albumlist(team_id, oauth_token):
     flask.current_app.logger.error(f'[router]: failed to create new albumlist for {team_id}: {response.status_code}')
 
 
-def set_config_variables_for_albumlist(app_url_or_name, config_dict):
+def set_config_variables_for_albumlist(app_url_or_name, config_dict, session=requests):
     if scrape_links_from_text(app_url_or_name):
         app_url_or_name = urlparse(app_url_or_name).hostname.split('.')[0]
     flask.current_app.logger.info(f'[router]: updating config variables for {app_url_or_name}...')
     url = f"{urljoin(slack_blueprint.config['HEROKU_API_URL'], 'apps')}/{app_url_or_name}/config-vars"
     headers = slack_blueprint.config['HEROKU_HEADERS']
-    response = requests.patch(url, headers=headers, json=payload)
+    response = session.patch(url, headers=headers, json=config_dict)
     if response.ok:
         return
     flask.current_app.logger.error(f'[router]: failed to update config variables for {app_url_or_name}: {response.status_code}')
@@ -153,10 +163,13 @@ def check_albumlist():
             return 'OK', 200
         flask.current_app.logger.info(f'[router]: connection to {app} failed: {response.status_code}')
         return f'Failed ({response.status_code})'
-    url = urljoin(slack_blueprint.config['HEROKU_API_URL'], f'apps/{app}/dynos')
-    headers = slack_blueprint.config['HEROKU_HEADERS']
-    flask.current_app.logger.info(f'[router]: checking status of {app} dynos for {team_id}')
-    response = requests.get(url, headers=headers)
+    with requests.Session() as s:
+        if not is_managed(app, session=s):
+            return 'Failed (unknown app)'
+        url = urljoin(slack_blueprint.config['HEROKU_API_URL'], f'apps/{app}/dynos')
+        headers = slack_blueprint.config['HEROKU_HEADERS']
+        flask.current_app.logger.info(f'[router]: checking status of {app} dynos for {team_id}')
+        response = s.get(url, headers=headers)
     if response.ok:
         flask.current_app.logger.info(f'[router]: app is deployed')
         dynos = response.json()
@@ -298,7 +311,7 @@ def auth():
     response = requests.get(url)
     response_json = response.json()
     flask.current_app.logger.info(f'[auth]: {response_json}')
-    if response_json.get('ok'):
+    if response.ok and response_json.get('ok'):
         team_id = response_json['team_id']
         access_token = response_json['access_token']
         try:
@@ -306,10 +319,11 @@ def auth():
                 mapping.set_token_for_team(team_id, access_token)
                 flask.current_app.logger.info(f'[router]: set new token {access_token} for {team_id}')
                 app_url_or_name = mapping.get_app_url_for_team(team_id)
-                if app_url_or_name:
-                    config_dict = {'SLACK_OAUTH_TOKEN': access_token}
-                    set_config_variables_for_albumlist(app_url_or_name, config_dict)
-                    flask.current_app.logger.info(f'[router]: updated albumlist with new access token')
+                with requests.Session() as s:
+                    if app_url_or_name and is_managed(app_url_or_name, session=s):
+                        config_dict = {'SLACK_OAUTH_TOKEN': access_token}
+                        set_config_variables_for_albumlist(app_url_or_name, config_dict, session=s)
+                        flask.current_app.logger.info(f'[router]: updated albumlist with new access token')
                 return 'OK', 200
             else:
                 mapping.add_team(team_id, access_token)
