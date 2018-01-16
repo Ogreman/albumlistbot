@@ -94,6 +94,25 @@ def set_config_variables_for_albumlist(app_url_or_name, config_dict, session=req
     flask.current_app.logger.error(f'[router]: failed to update config variables for {app_url_or_name}: {response.status_code}')
 
 
+@slack_blueprint.route('/get_list', methods=['POST'])
+@slack_check
+def get_list():
+    form_data = flask.request.form
+    team_id = form_data['team_id']
+    user_id = form_data['user_id']
+    try:
+        app_url, token = mapping.get_app_and_token_for_team(team_id)
+    except TypeError:
+        return 'Team not authorised', 200
+    if not token:
+        return 'Team not authorised', 200
+    if not is_slack_admin(token, user_id):
+        return 'Not authorised', 200
+    if not app_url:
+        return '', 200
+    return app_url, 200
+
+
 @slack_blueprint.route('/create_list', methods=['POST'])
 @slack_check
 def create_list():
