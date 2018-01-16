@@ -1,6 +1,5 @@
 import functools
 import json
-import logging
 import re
 from urllib.parse import urljoin, urlparse
 

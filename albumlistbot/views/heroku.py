@@ -1,5 +1,5 @@
 import flask
-import logging
+import requests
 
 from albumlistbot import constants
 from albumlistbot.models import DatabaseError
@@ -25,7 +25,7 @@ def oauth_redirect():
     payload = {
         'grant_type': 'authorization_code',
         'code': code,
-        'client_secret': heroku_blueprint.config['HEROKU_CLIENT_SECRET']
+        'client_secret': client_secret,
     }
     flask.current_app.logger.info(f'[heroku]: getting new token for {team_id}...')
     response = requests.post(constants.HEROKU_TOKEN_URL, data=payload)
