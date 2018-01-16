@@ -388,8 +388,8 @@ def auth_heroku():
     if not is_slack_admin(token, user_id):
         return 'Not authorised', 200
     url = constants.HEROKU_AUTH_URL.format(
-        client_id=heroku_blueprint.config['HEROKU_CLIENT_ID'],
-        csrf_token=heroku_blueprint.config['CSRF_TOKEN'] + f':{team_id}')
+        client_id=slack_blueprint.config['HEROKU_CLIENT_ID'],
+        csrf_token=slack_blueprint.config['CSRF_TOKEN'] + f':{team_id}')
     return flask.redirect(url)
 
 
