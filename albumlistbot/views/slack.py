@@ -394,7 +394,7 @@ def auth_heroku():
         {
             "fallback": "Heroku",
             "title_link": url,
-            "text": "Create OAuth token",
+            "title": "Create OAuth token",
             "footer": "Albumlistbot",
         }
     ]
