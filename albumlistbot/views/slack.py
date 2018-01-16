@@ -20,7 +20,7 @@ slack_blueprint = flask.Blueprint(name='slack',
 
 def slack_check(func):
     """
-    Decorator for locking down slack endpoints to registered apps only
+    Decorator for locking down Slack endpoints to registered apps only
     """
     @functools.wraps(func)
     def wraps(*args, **kwargs):
@@ -108,7 +108,7 @@ def get_list():
     team_id = form_data['team_id']
     user_id = form_data['user_id']
     try:
-        app_url, token = mapping.get_app_and_token_for_team(team_id)
+        app_url, token = mapping.get_app_and_slack_token_for_team(team_id)
     except TypeError:
         return 'Team not authorised', 200
     if not token:
@@ -127,7 +127,7 @@ def create_list():
     team_id = form_data['team_id']
     user_id = form_data['user_id']
     try:
-        app_url, token = mapping.get_app_and_token_for_team(team_id)
+        app_url, token = mapping.get_app_and_slack_token_for_team(team_id)
     except TypeError:
         return 'Team not authorised', 200
     if not token:
@@ -228,7 +228,7 @@ def set_mapping():
     form_data = flask.request.form
     team_id = form_data['team_id']
     user_id = form_data['user_id']
-    token = mapping.get_token_for_team(team_id)
+    token = mapping.get_slack_token_for_team(team_id)
     if not token:
         return 'Team not authorised', 200
     if not is_slack_admin(token, user_id):
@@ -252,7 +252,7 @@ def remove_mapping():
     form_data = flask.request.form
     team_id = form_data['team_id']
     user_id = form_data['user_id']
-    app_url, token = mapping.get_app_and_token_for_team(team_id)
+    app_url, token = mapping.get_app_and_slack_token_for_team(team_id)
     if not token:
         return 'Team not authorised', 200
     if not is_slack_admin(token, user_id):
@@ -301,7 +301,7 @@ def route_to_app():
         team_id = json_data['team']['id']
         if json_data['callback_id'] == f'create_list_{team_id}':
             if 'yes' in json_data['actions'][0]['name']:
-                token = mapping.get_token_for_team(team_id)
+                token = mapping.get_slack_token_for_team(team_id)
                 if not token:
                     return 'Team not authorised', 200
                 app_name = create_new_albumlist(team_id, token)
@@ -327,7 +327,7 @@ def route_to_app():
     else:
         team_id = form_data['team_id']
     try:
-        app_url, token = mapping.get_app_and_token_for_team(team_id)
+        app_url, token = mapping.get_app_and_slack_token_for_team(team_id)
         if not app_url:
             return 'Failed (use /register [url] first to use Albumlist commands)', 200
         if not scrape_links_from_text(app_url):
@@ -362,7 +362,7 @@ def route_events_to_app():
         return '', 200
     team_id = json_data['team_id']
     try:
-        app_url, token = mapping.get_app_and_token_for_team(team_id)
+        app_url, token = mapping.get_app_and_slack_token_for_team(team_id)
         if not app_url or not scrape_links_from_text(app_url):
             return '', 200
     except DatabaseError as e:
@@ -374,6 +374,18 @@ def route_events_to_app():
     if not response.ok:
         flask.current_app.logger.error(f'[router]: connection error to {full_url}: {response.status_code}')
     return '', 200
+
+
+@slack_blueprint.route('/heroku/auth', methods=['POST'])
+@slack_check
+def auth_heroku():
+    team_id = form_data['team_id']
+    if not team_id:
+        return '', 200
+    url = constants.HEROKU_AUTH_URL.format(
+        client_id=heroku_blueprint.config['HEROKU_CLIENT_ID'],
+        csrf_token=heroku_blueprint.config['CSRF_TOKEN'] + f':{team_id}')
+    return flask.redirect(url)
 
 
 @slack_blueprint.route('/auth', methods=['GET'])
@@ -390,7 +402,7 @@ def auth():
         access_token = response_json['access_token']
         try:
             if mapping.team_exists(team_id):
-                mapping.set_token_for_team(team_id, access_token)
+                mapping.set_slack_token_for_team(team_id, access_token)
                 flask.current_app.logger.info(f'[router]: set new token {access_token} for {team_id}')
                 app_url_or_name = mapping.get_app_url_for_team(team_id)
                 with requests.Session() as s:
@@ -400,7 +412,7 @@ def auth():
                         flask.current_app.logger.info(f'[router]: updated albumlist with new access token')
                 return flask.redirect(get_slack_team_url(access_token))
             else:
-                mapping.add_team(team_id, access_token)
+                mapping.add_team_with_token(team_id, access_token)
                 flask.current_app.logger.info(f'[router]: added {team_id} with {access_token}')
                 return flask.redirect(get_slack_team_url(access_token))
         except DatabaseError as e:

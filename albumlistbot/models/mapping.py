@@ -11,7 +11,8 @@ def create_mapping_table():
         CREATE TABLE mapping (
         team varchar UNIQUE,
         app varchar DEFAULT '',
-        token varchar DEFAULT ''
+        token varchar DEFAULT '',
+        heroku varchar DEFAULT '',
         );"""
     with closing(get_connection()) as conn:
         try:
@@ -70,7 +71,7 @@ def get_app_url_for_team(team):
             return
 
 
-def get_token_for_team(team):
+def get_slack_token_for_team(team):
     sql = """
         SELECT token
         FROM mapping
@@ -87,7 +88,24 @@ def get_token_for_team(team):
             return
 
 
-def get_app_and_token_for_team(team):
+def get_heroku_token_for_team(team):
+    sql = """
+        SELECT heroku
+        FROM mapping
+        WHERE team = %s;
+    """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (team,))
+            return cur.fetchone()[0]
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+        except (IndexError, TypeError):
+            return
+
+
+def get_app_and_slack_token_for_team(team):
     sql = """
         SELECT app, token
         FROM mapping
@@ -102,7 +120,22 @@ def get_app_and_token_for_team(team):
             raise DatabaseError(e)
 
 
-def add_team(team, token):
+def get_app_and_heroku_token_for_team(team):
+    sql = """
+        SELECT app, heroku
+        FROM mapping
+        WHERE team = %s;
+    """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (team,))
+            return cur.fetchone()
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+
+
+def add_team_with_token(team, token):
     sql = """
         INSERT INTO mapping (team, token) VALUES (%s, %s);"""
     with closing(get_connection()) as conn:
@@ -131,10 +164,25 @@ def set_mapping_for_team(team, app_url):
             raise DatabaseError(e)
 
 
-def set_token_for_team(team, token):
+def set_slack_token_for_team(team, token):
     sql = """
         UPDATE mapping
         SET token = %s
+        WHERE team = %s;
+        """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (token, team))
+            conn.commit()
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+
+
+def set_heroku_token_for_team(team, token):
+    sql = """
+        UPDATE mapping
+        SET heroku = %s
         WHERE team = %s;
         """
     with closing(get_connection()) as conn:
