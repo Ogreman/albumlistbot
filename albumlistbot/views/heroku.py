@@ -35,10 +35,11 @@ def oauth_redirect():
         flask.current_app.logger.error(f'[heroku]: {response_json}')
         return 'Failed'
     access_token = response_json['access_token']
+    refresh_token = response_json['refresh_token']
     flask.current_app.logger.info(f'[heroku]: {team_id}: {access_token}')
     payload = {
         'grant_type': 'refresh_token',
-        'refresh_token': access_token,
+        'refresh_token': refresh_token,
         'client_secret': client_secret,
     }
     flask.current_app.logger.info(f'[heroku]: getting refresh token for {team_id}...')
