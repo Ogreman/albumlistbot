@@ -390,14 +390,12 @@ def auth_heroku():
     url = constants.HEROKU_AUTH_URL.format(
         client_id=slack_blueprint.config['HEROKU_CLIENT_ID'],
         csrf_token=slack_blueprint.config['CSRF_TOKEN'] + f':{team_id}')
-    attachment = [
-        {
-            "fallback": "Heroku",
-            "title_link": url,
-            "title": "Create OAuth token",
-            "footer": "Albumlistbot",
-        }
-    ]
+    attachment = {
+        "fallback": "Heroku",
+        "title_link": url,
+        "title": "Create OAuth token",
+        "footer": "Albumlistbot",
+    }
     response = {
         'response_type': 'ephemeral',
         'text': 'Click the link to allow Albumlistbot to manage your Heroku apps',
