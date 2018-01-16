@@ -380,8 +380,12 @@ def route_events_to_app():
 @slack_check
 def auth_heroku():
     team_id = form_data['team_id']
-    if not team_id:
-        return '', 200
+    user_id = form_data['user_id']
+    token = mapping.get_slack_token_for_team(team_id)
+    if not token:
+        return 'Team not authorised', 200
+    if not is_slack_admin(token, user_id):
+        return 'Not authorised', 200
     url = constants.HEROKU_AUTH_URL.format(
         client_id=heroku_blueprint.config['HEROKU_CLIENT_ID'],
         csrf_token=heroku_blueprint.config['CSRF_TOKEN'] + f':{team_id}')
