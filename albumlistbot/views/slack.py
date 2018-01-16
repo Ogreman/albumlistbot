@@ -31,6 +31,13 @@ def slack_check(func):
     return wraps
 
 
+def get_slack_team_url(token):
+    slack = Slacker(token)
+    flask.current_app.logger.info(f'[router]: getting team info...')
+    info = slack.team.info()
+    return f"https://{info.body['team']['domain']}.slack.com"
+
+
 def is_slack_admin(token, user_id):
     slack = Slacker(token)
     flask.current_app.logger.info(f'[router]: performing admin check...')
@@ -391,11 +398,11 @@ def auth():
                         config_dict = {'SLACK_OAUTH_TOKEN': access_token}
                         set_config_variables_for_albumlist(app_url_or_name, config_dict, session=s)
                         flask.current_app.logger.info(f'[router]: updated albumlist with new access token')
-                return 'OK', 200
+                return flask.redirect(get_slack_team_url(access_token))
             else:
                 mapping.add_team(team_id, access_token)
                 flask.current_app.logger.info(f'[router]: added {team_id} with {access_token}')
-                return 'OK', 200
+                return flask.redirect(get_slack_team_url(access_token))
         except DatabaseError as e:
             flask.current_app.logger.error(f'[db]: {e}')
             return 'Failed to add team', 500
