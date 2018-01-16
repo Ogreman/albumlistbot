@@ -379,6 +379,7 @@ def route_events_to_app():
 @slack_blueprint.route('/heroku/auth', methods=['POST'])
 @slack_check
 def auth_heroku():
+    form_data = flask.request.form
     team_id = form_data['team_id']
     user_id = form_data['user_id']
     token = mapping.get_slack_token_for_team(team_id)
