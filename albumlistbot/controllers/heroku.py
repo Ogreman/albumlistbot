@@ -52,6 +52,7 @@ def create_new_albumlist(team_id, slack_token, heroku_token, session=requests):
     response = session.post(url, headers=headers, json=payload)
     if response.ok:
         response_json = response.json()
+        flask.current_app.logger.debug(f'[heroku]: {response_json}')
         app_name = response_json['app']['name']
         flask.current_app.logger.info(f'[heroku]: created {app_name}')
         return app_name
@@ -87,6 +88,7 @@ def check_and_update(team_id, app_name, heroku_token):
         return False
     flask.current_app.logger.info(f'[heroku]: app {app_name} is deployed')
     dynos = response.json()
+    flask.current_app.logger.debug(f'[heroku]: {dynos}')
     if dynos and all(dyno['state'] == 'up' for dyno in dynos):
         app_url = f'https://{app_name}.herokuapp.com'
         flask.current_app.logger.info(f'[heroku]: registering {team_id} with {app_url}')
