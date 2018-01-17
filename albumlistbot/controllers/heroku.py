@@ -9,7 +9,7 @@ from albumlistbot.models import DatabaseError, mapping
 
 
 def set_heroku_headers(heroku_token):
-    headers = constants.HEROKU_HEADERS
+    headers = constants.HEROKU_HEADERS.copy()
     headers['Authorization'] = headers['Authorization'].format(heroku_token=heroku_token)
     return headers
 
@@ -23,6 +23,7 @@ def is_managed(app_url_or_name, heroku_token, session=requests):
     url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_url_or_name}"
     headers = set_heroku_headers(heroku_token)
     response = session.get(url, headers=headers, timeout=1.5)
+    flask.current_app.logger.debug(f'[heroku]: {response.json()}')
     return response.ok
 
 
@@ -50,9 +51,9 @@ def create_new_albumlist(team_id, slack_token, heroku_token, session=requests):
         },
     }
     response = session.post(url, headers=headers, json=payload)
+    response_json = response.json()
+    flask.current_app.logger.debug(f'[heroku]: {response_json}')
     if response.ok:
-        response_json = response.json()
-        flask.current_app.logger.debug(f'[heroku]: {response_json}')
         app_name = response_json['app']['name']
         flask.current_app.logger.info(f'[heroku]: created {app_name}')
         return app_name
