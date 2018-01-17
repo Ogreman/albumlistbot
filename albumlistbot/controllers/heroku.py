@@ -74,21 +74,21 @@ def set_config_variables_for_albumlist(app_url_or_name, heroku_token, config_dic
 def check_and_update(team_id, app_name, heroku_token):
     try:
         with requests.Session() as s:
-            if not is_managed(app, heroku_token, session=s):
+            if not is_managed(app_name, heroku_token, session=s):
                 return False
-            url = urljoin(constants.HEROKU_API_URL, f'apps/{app}/dynos')
+            url = urljoin(constants.HEROKU_API_URL, f'apps/{app_name}/dynos')
             headers = set_heroku_headers(heroku_token)
-            flask.current_app.logger.info(f'[heroku]: checking status of {app} dynos for {team_id}')
+            flask.current_app.logger.info(f'[heroku]: checking status of {app_name} dynos for {team_id}')
             response = s.get(url, headers=headers, timeout=1.5)
     except requests.exceptions.Timeout:
         flask.current_app.logger.error(f'[heroku]: API timed out')
         return False
     if not response.ok:
         return False
-    flask.current_app.logger.info(f'[heroku]: app {app} is deployed')
+    flask.current_app.logger.info(f'[heroku]: app {app_name} is deployed')
     dynos = response.json()
     if dynos and all(dyno['state'] == 'up' for dyno in dynos):
-        app_url = f'https://{app}.herokuapp.com'
+        app_url = f'https://{app_name}.herokuapp.com'
         flask.current_app.logger.info(f'[heroku]: registering {team_id} with {app_url}')
         try:
             mapping.set_mapping_for_team(team_id, app_url)
