@@ -25,6 +25,11 @@ SLASH_COMMANDS = {
     'set': slack.set_albumlist,
     'create': heroku.create_albumlist,
     'check': heroku.check_albumlist,
+    'process_albums': slack.process_albums,
+    'process_check': slack.process_check,
+    'process_covers': slack.process_covers,
+    'process_duplicates': slack.process_duplicates,
+    'process_tags': slack.process_tags,
     'remove': slack.remove_albumlist,
     'heroku': heroku.auth_heroku,
     'help': list_commands,
@@ -58,6 +63,11 @@ def albumlist_commands():
           /albumlist heroku
           /albumlist reauth (TODO)
           /albumlist test https://mynewlist.herokuapp.com (TODO)
+          /albumlist process_albums
+          /albumlist process_check
+          /albumlist process_covers
+          /albumlist process_duplicates
+          /albumlist process_tags
     """
     form_data = flask.request.form
     team_id = form_data['team_id']
@@ -78,6 +88,7 @@ def albumlist_commands():
             app_url=app_url,
             slack_token=slack_token,
             heroku_token=heroku_token,
+            form_data=form_data,
             params=params), 200
     except KeyError:
         return 'No such albumlist command', 200
@@ -121,27 +132,11 @@ def route_to_app():
     else:
         team_id = form_data['team_id']
     try:
-        app_url, token = mapping.get_app_and_slack_token_for_team(team_id)
-        if not app_url:
-            return 'Failed (use /set_albumlist [url] first to use Albumlist commands)', 200
-        if not scrape_links_from_text(app_url):
-            return 'Failed (try /check)', 200
+        app_url = mapping.get_app_url_for_team(team_id)
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
         return 'Failed', 200
-    full_url = f'{urljoin(app_url, "slack")}/{uri}'
-    flask.current_app.logger.info(f'[router]: connecting {team_id} to {full_url}...')
-    try:
-        response = requests.post(full_url, data=form_data, timeout=2.0)
-    except requests.exceptions.Timeout:
-        return 'The connection to the albumlist timed out', 200
-    if not response.ok:
-        flask.current_app.logger.error(f'[router]: connection error for {team_id} to {full_url}: {response.status_code}')
-        return 'Failed', 200
-    try:
-        return flask.jsonify(response.json()), 200
-    except ValueError:
-        return response.text, 200
+    return slack.route_commands_to_albumlist(team_id, app_url, uri, form_data), 200
 
 
 @slack_blueprint.route('/route/events', methods=['POST'])

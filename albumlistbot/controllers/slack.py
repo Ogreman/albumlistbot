@@ -1,8 +1,32 @@
+import functools
+from urllib.parse import urljoin
+
 import flask
+import requests
 from slacker import Slacker
 
 from albumlistbot.controllers import scrape_links_from_text
 from albumlistbot.models import mapping, DatabaseError
+
+
+def route_commands_to_albumlist(team_id, app_url, uri, form_data):
+    if not app_url:
+        return 'Failed (use /set_albumlist [url] first to use Albumlist commands)'
+    if not scrape_links_from_text(app_url):
+        return 'Failed (try /check)'
+    full_url = f'{urljoin(app_url, "slack")}/{uri}'
+    flask.current_app.logger.info(f'[router]: connecting {team_id} to {full_url}...')
+    try:
+        response = requests.post(full_url, data=form_data, timeout=2.0)
+    except requests.exceptions.Timeout:
+        return 'The connection to the albumlist timed out'
+    if not response.ok:
+        flask.current_app.logger.error(f'[router]: connection error for {team_id} to {full_url}: {response.status_code}')
+        return 'Failed'
+    try:
+        return flask.jsonify(response.json())
+    except ValueError:
+        return response.text
 
 
 def get_slack_team_url(token):
@@ -70,3 +94,10 @@ def remove_albumlist(team_id, app_url, *args, **kwargs):
         flask.current_app.logger.error(f'[db]: {e}')
         return ''
     return 'Unregistered the Albumlist for your Slack team (re-add albumlistbot to Slack to use again)'
+
+
+process_albums = functools.partial(route_commands_to_albumlist, uri='process')
+process_check = functools.partial(route_commands_to_albumlist, uri='process/check')
+process_covers = functools.partial(route_commands_to_albumlist, uri='process/covers')
+process_duplicates = functools.partial(route_commands_to_albumlist, uri='process/duplicates')
+process_tags = functools.partial(route_commands_to_albumlist, uri='process/tags')
