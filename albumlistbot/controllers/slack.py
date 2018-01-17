@@ -47,9 +47,9 @@ def get_albumlist(app_url, *args, **kwargs):
     return app_url
 
 
-def set_albumlist(team_id, params, *args, **kwargs):
+def set_albumlist(team_id, form_data, *args, **kwargs):
     try:
-        app_url = scrape_links_from_text(params[0])[0]
+        app_url = scrape_links_from_text(form_data['text'])[0]
     except IndexError:
         return 'Provide an URL for the Albumlist'
     flask.current_app.logger.info(f'[router]: registering {team_id} with {app_url}')
@@ -101,3 +101,5 @@ process_check = functools.partial(route_commands_to_albumlist, uri='process/chec
 process_covers = functools.partial(route_commands_to_albumlist, uri='process/covers')
 process_duplicates = functools.partial(route_commands_to_albumlist, uri='process/duplicates')
 process_tags = functools.partial(route_commands_to_albumlist, uri='process/tags')
+clear_cache = functools.partial(route_commands_to_albumlist, uri='clear')
+restore_from_url = functools.partial(route_commands_to_albumlist, uri='restore_from_url')

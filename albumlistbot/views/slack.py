@@ -30,6 +30,8 @@ SLASH_COMMANDS = {
     'process_covers': slack.process_covers,
     'process_duplicates': slack.process_duplicates,
     'process_tags': slack.process_tags,
+    'clear_cache': slack.clear_cache,
+    'restore': slack.restore_from_url,
     'remove': slack.remove_albumlist,
     'heroku': heroku.auth_heroku,
     'help': list_commands,
@@ -60,6 +62,7 @@ def albumlist_commands():
           /albumlist create
           /albumlist check
           /albumlist remove
+          /albumlist restore https://some-remote.csv
           /albumlist heroku
           /albumlist reauth (TODO)
           /albumlist test https://mynewlist.herokuapp.com (TODO)
@@ -68,8 +71,9 @@ def albumlist_commands():
           /albumlist process_covers
           /albumlist process_duplicates
           /albumlist process_tags
+          /albumlist clear_cache
     """
-    form_data = flask.request.form
+    form_data = flask.request.form.copy()
     team_id = form_data['team_id']
     user_id = form_data['user_id']
     text = form_data['text']
@@ -82,14 +86,14 @@ def albumlist_commands():
     if not slack.is_slack_admin(slack_token, user_id):
         return 'Not authorised', 200
     command, *params = text.strip().split(' ')
+    form_data['text'] = ' '.join(params)
     try:
         return SLASH_COMMANDS[command](
             team_id=team_id,
             app_url=app_url,
             slack_token=slack_token,
             heroku_token=heroku_token,
-            form_data=form_data,
-            params=params), 200
+            form_data=form_data), 200
     except KeyError:
         return 'No such albumlist command', 200
 
