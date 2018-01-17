@@ -95,6 +95,7 @@ def check_and_update(team_id, app_name, heroku_token):
         flask.current_app.logger.info(f'[heroku]: registering {team_id} with {app_url}')
         try:
             mapping.set_mapping_for_team(team_id, app_url)
+            flask.current_app.logger.info(f'[heroku]: {app_url} ready')
         except DatabaseError as e:
             flask.current_app.logger.error(f'[db]: {e}')
             return False

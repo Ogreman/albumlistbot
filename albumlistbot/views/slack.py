@@ -355,7 +355,7 @@ def auth():
                 with requests.Session() as s:
                     if app_url_or_name and heroku.is_managed(app_url_or_name, heroku_token, session=s):
                         config_dict = {'SLACK_OAUTH_TOKEN': access_token}
-                        set_config_variables_for_albumlist(app_url_or_name, heroku_token, config_dict, session=s)
+                        heroku.set_config_variables_for_albumlist(app_url_or_name, heroku_token, config_dict, session=s)
                         flask.current_app.logger.info(f'[router]: updated albumlist with new access token')
                 return flask.redirect(get_slack_team_url(access_token))
             else:
