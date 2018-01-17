@@ -27,14 +27,14 @@ def set_albumlist(team_id, params, *args, **kwargs):
     try:
         app_url = scrape_links_from_text(params[0])[0]
     except IndexError:
-        return 'Provide an URL for the Albumlist', 200
+        return 'Provide an URL for the Albumlist'
     flask.current_app.logger.info(f'[router]: registering {team_id} with {app_url}')
     try:
         mapping.set_mapping_for_team(team_id, app_url)
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
-        return 'Team not authed or already registered', 200
-    return 'Registered your Slack team with the provided Albumlist', 200
+        return 'Team not authed or already registered'
+    return 'Registered your Slack team with the provided Albumlist'
 
 
 def remove_albumlist(team_id, app_url, *args, **kwargs):
