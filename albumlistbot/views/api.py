@@ -1,6 +1,7 @@
 import flask
 import logging
 
+from albumlistbot.controllers import heroku
 from albumlistbot.models import DatabaseError
 from albumlistbot.models import mapping
 
