@@ -17,6 +17,7 @@ class Config(object):
     SLACK_CLIENT_SECRET = os.environ.get('SLACK_CLIENT_SECRET')
     APP_TOKEN = os.environ.get('APP_TOKEN_SELF')
     CSRF_TOKEN = ''.join(random.choice(string.ascii_letters) for _ in range(25))
+    ALBUMLISTBOT_URL = os.environ.get('ALBUMLISTBOT_URL')
 
 
 class ProductionConfig(Config):
