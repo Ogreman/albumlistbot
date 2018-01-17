@@ -2,13 +2,14 @@ import flask
 import requests
 
 from albumlistbot import constants
-from albumlistbot.models import DatabaseError
-from albumlistbot.models import mapping
+from albumlistbot.controllers import heroku
+from albumlistbot.models import DatabaseError, mapping
 
 
 heroku_blueprint = flask.Blueprint(name='heroku',
                                import_name=__name__,
                                url_prefix='/heroku')
+
 
 
 @heroku_blueprint.route('/oauth', methods=['GET'])
@@ -43,10 +44,7 @@ def oauth_redirect():
         'client_secret': client_secret,
     }
     flask.current_app.logger.info(f'[heroku]: getting refresh token for {team_id}...')
-    headers = {
-        'Accept': 'application/vnd.heroku+json; version=3',
-        'Authorization': f'Bearer {access_token}'
-    }
+    headers = heroku.set_heroku_headers(access_token)
     response = requests.post(constants.HEROKU_TOKEN_URL, data=payload, headers=headers)
     response_json = response.json()
     if not response.ok:
@@ -62,5 +60,3 @@ def oauth_redirect():
         return 'Failed'
     flask.current_app.logger.info(f'[heroku]: added heroku token to db for {team_id}')
     return 'OK'
-
-

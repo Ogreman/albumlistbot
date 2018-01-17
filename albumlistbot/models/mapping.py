@@ -120,9 +120,39 @@ def get_app_and_slack_token_for_team(team):
             raise DatabaseError(e)
 
 
+def get_tokens_for_team(team):
+    sql = """
+        SELECT token, heroku
+        FROM mapping
+        WHERE team = %s;
+    """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (team,))
+            return cur.fetchone()
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+
+
 def get_app_and_heroku_token_for_team(team):
     sql = """
         SELECT app, heroku
+        FROM mapping
+        WHERE team = %s;
+    """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (team,))
+            return cur.fetchone()
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+
+
+def get_app_slack_heroku_for_team(team):
+    sql = """
+        SELECT app, slack, heroku
         FROM mapping
         WHERE team = %s;
     """

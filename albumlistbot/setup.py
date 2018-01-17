@@ -12,13 +12,13 @@ def add_blueprints(application):
     application.register_blueprint(api_blueprint)
     api_blueprint.config = application.config.copy()
 
-    from albumlistbot.views.slack import slack_blueprint
-    application.register_blueprint(slack_blueprint)
-    slack_blueprint.config = application.config.copy()
-
     from albumlistbot.views.heroku import heroku_blueprint
     application.register_blueprint(heroku_blueprint)
     heroku_blueprint.config = application.config.copy()
+
+    from albumlistbot.views.slack import slack_blueprint
+    application.register_blueprint(slack_blueprint)
+    slack_blueprint.config = application.config.copy()
 
 
 def create_app():
