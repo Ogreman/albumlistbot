@@ -4,7 +4,7 @@ This is an app that manages albumlist applications.
 
 Click the button below to add the bot to your [Slack](https://slack.com) team and use it to `/register` your [Albumlist](https://github.com/Ogreman/albumlist) instance (using the full URL to the app, e.g.: `/set_albumlist https://myalbumlist.herokuapp.com`) or create a new Albumlist with the `/create_albumlist` command.
 
-<a href="https://slack.com/oauth/authorize?client_id=10066701634.66761250224&scope=bot,commands,chat:write:bot,channels:history,links:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
+<a href="https://slack.com/oauth/authorize?client_id=10066701634.66761250224&scope=bot,commands,chat:write:bot,channels:history,links:read,users:read,team:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
 
 ## Deploy to Heroku
 

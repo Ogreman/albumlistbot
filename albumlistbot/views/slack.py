@@ -260,7 +260,7 @@ def route_to_app():
     try:
         app_url, token = mapping.get_app_and_slack_token_for_team(team_id)
         if not app_url:
-            return 'Failed (use /register [url] first to use Albumlist commands)', 200
+            return 'Failed (use /set_albumlist [url] first to use Albumlist commands)', 200
         if not scrape_links_from_text(app_url):
             return 'Failed (try /check)', 200
     except DatabaseError as e:

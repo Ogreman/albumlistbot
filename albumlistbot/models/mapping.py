@@ -152,7 +152,7 @@ def get_app_and_heroku_token_for_team(team):
 
 def get_app_slack_heroku_for_team(team):
     sql = """
-        SELECT app, slack, heroku
+        SELECT app, token, heroku
         FROM mapping
         WHERE team = %s;
     """
