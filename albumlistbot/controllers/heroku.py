@@ -27,6 +27,48 @@ def is_managed(app_url_or_name, heroku_token, session=requests):
     return response.ok
 
 
+def create_albumlist(team_id, app_url, slack_token, heroku_token, *args, **kwargs):
+    if not heroku_token:
+        return 'Missing Heroku OAuth'
+    if not app_url:
+        app_name = create_new_albumlist(team_id, slack_token, heroku_token)
+        if not app_name:
+            return 'Failed'
+        try:
+            mapping.set_mapping_for_team(team_id, app_name)
+        except DatabaseError as e:
+            flask.current_app.logger.error(f'[db]: {e}')
+            return 'Failed'
+        return 'Creating new albumlist...'
+    else:
+        attachment = {
+            'fallback': 'Replace existing list?',
+            'title': 'Replace existing list?',
+            'callback_id': f'create_list_{team_id}',
+            'actions': [
+                {
+                    'name': 'yes',
+                    'text': 'Yes',
+                    'type': 'button',
+                    'value': team_id,
+                },
+                {
+                    'name': 'no',
+                    'text': 'No',
+                    'type': 'button',
+                    'value': team_id,
+                }
+            ],
+        }
+        response = {
+            'response_type': 'ephemeral',
+            'text': f'An existing albumlist was found...',
+            'attachments': [attachment],
+        }
+        return flask.jsonify(response)
+    return ''
+
+
 def create_new_albumlist(team_id, slack_token, heroku_token, session=requests):
     if not heroku_token:
         return
@@ -102,3 +144,41 @@ def check_and_update(team_id, app_name, heroku_token):
         else:
             return True
     return False
+
+
+def check_albumlist(team_id, app_url, heroku_token, *args, **kwargs):
+    if not app_url:
+        return 'No albumlist mapped to this team (admins: use /create_albumlist to get started)'
+    if scrape_links_from_text(app_url):
+        flask.current_app.logger.info(f'[router]: checking connection to {app_url} for {team_id}')
+        try:
+            response = requests.head(app_url, timeout=2.0)
+        except requests.exceptions.Timeout:
+            return 'The connection to the albumlist timed out'
+        if response.ok:
+            return 'OK'
+        flask.current_app.logger.info(f'[router]: connection to {app_url} failed: {response.status_code}')
+        return f'Failed ({response.status_code})'
+    if not heroku_token:
+        return 'Missing Heroku OAuth'
+    if check_and_update(team_id, app_url, heroku_token):
+        return 'OK'
+    return 'Failed. Try running /check_albumlist again'
+
+
+def auth_heroku(team_id, *args, **kwargs):
+    url = constants.HEROKU_AUTH_URL.format(
+        client_id=flask.current_app.config['HEROKU_CLIENT_ID'],
+        csrf_token=flask.current_app.config['CSRF_TOKEN'] + f':{team_id}')
+    attachment = {
+        "fallback": "Heroku",
+        "title_link": url,
+        "title": "Create OAuth token",
+        "footer": "Albumlistbot",
+    }
+    response = {
+        'response_type': 'ephemeral',
+        'text': 'Click the link to allow Albumlistbot to manage your Heroku apps',
+        'attachments': [attachment],
+    }
+    return flask.jsonify(response)
