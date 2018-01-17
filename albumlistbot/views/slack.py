@@ -16,6 +16,21 @@ slack_blueprint = flask.Blueprint(name='slack',
                                url_prefix='/slack')
 
 
+def list_commands(*args, **kwargs):
+    return '\n'.join(SLASH_COMMANDS.keys())
+
+
+SLASH_COMMANDS = {
+    'get': slack.get_albumlist,
+    'set': slack.set_albumlist,
+    'create': heroku.create_albumlist,
+    'check': heroku.check_albumlist,
+    'remove': slack.remove_albumlist,
+    'heroku': heroku.auth_heroku,
+    'help': list_commands,
+}
+
+
 def slack_check(func):
     """
     Decorator for locking down Slack endpoints to registered apps only
@@ -52,20 +67,13 @@ def albumlist_commands():
         app_url, slack_token, heroku_token = mapping.get_app_slack_heroku_for_team(team_id)
     except TypeError:
         return 'Team not authorised', 200
-    if not token:
+    if not slack_token:
         return 'Team not authorised', 200
     if not slack.is_slack_admin(slack_token, user_id):
         return 'Not authorised', 200
     command, *params = text.strip().split(' ')
     try:
-        return {
-            'get': slack.get_albumlist,
-            'set': slack.set_albumlist,
-            'create': heroku.create_albumlist,
-            'check': heroku.check_albumlist,
-            'remove': slack.remove_albumlist,
-            'heroku': heroku.auth_heroku,
-        }[command](
+        return SLASH_COMMANDS[command](
             team_id=team_id,
             app_url=app_url,
             slack_token=slack_token,
