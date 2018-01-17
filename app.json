@@ -34,6 +34,10 @@
     "APP_TOKEN_SELF": {
         "description": "This bot's validation token from Slack.",
         "value": "change-me"
+    },
+    "ALBUMLISTBOT_URL": {
+        "description": "The location an albumlist should ping on.",
+        "value": "https://albumlistbot.herokuapp.com/api/ping"
     }
   },
   "formation": {

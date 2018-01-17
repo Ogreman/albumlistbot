@@ -35,3 +35,11 @@ def all_endpoints():
         if rule.endpoint.startswith('api')
     ]
     return flask.jsonify({'api': rules}), 200
+
+
+@api_blueprint.route('/ping', methods=['GET'])
+def albumlist_wake():
+    slack_token = flask.request.args['token']
+    team_id, app_url, heroku_token = mapping.get_team_app_heroku_by_slack(slack_token)
+    heroku.check_albumlist(team_id, app_url, heroku_token)
+    return '', 200

@@ -77,6 +77,7 @@ def create_new_albumlist(team_id, slack_token, heroku_token, session=requests):
     headers = set_heroku_headers(heroku_token)
     source = f'{flask.current_app.config["ALBUMLIST_GIT_URL"]}/tarball/master/'
     app_token = flask.current_app.config['APP_TOKEN']
+    bot_url = flask.current_app.config['ALBUMLISTBOT_URL']
     payload = {
         'app': {
             'region': 'eu',
@@ -89,6 +90,7 @@ def create_new_albumlist(team_id, slack_token, heroku_token, session=requests):
             'env': {
                 'APP_TOKEN_BOT': app_token,
                 'SLACK_OAUTH_TOKEN': slack_token,
+                'ALBUMLISTBOT_URL': bot_url,
             },
         },
     }
