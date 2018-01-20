@@ -12,8 +12,8 @@ from albumlistbot.models import DatabaseError, mapping
 
 
 slack_blueprint = flask.Blueprint(name='slack',
-                               import_name=__name__,
-                               url_prefix='/slack')
+                                  import_name=__name__,
+                                  url_prefix='/slack')
 
 
 def list_commands(*args, **kwargs):
@@ -45,7 +45,9 @@ def slack_check(func):
     """
     @functools.wraps(func)
     def wraps(*args, **kwargs):
-        if 'payload' in flask.request.form or flask.request.form.get('token', '') == slack_blueprint.config['APP_TOKEN'] or slack_blueprint.config['DEBUG']:
+        if ('payload' in flask.request.form) \
+        or (flask.request.form.get('token', '') == slack_blueprint.config['APP_TOKEN']) \
+        or slack_blueprint.config['DEBUG']:
             return func(*args, **kwargs)
         flask.current_app.logger.error('[access]: failed slack-check test')
         flask.abort(403)
@@ -81,9 +83,9 @@ def albumlist_commands():
     try:
         app_url, slack_token, heroku_token = mapping.get_app_slack_heroku_for_team(team_id)
     except TypeError:
-        return 'Team not authorised', 200
+        return slack.auth_slack(team_id), 200
     if not slack_token:
-        return 'Team not authorised', 200
+        return slack.auth_slack(team_id), 200
     if not slack.is_slack_admin(slack_token, user_id):
         return 'Not authorised', 200
     command, *params = text.strip().split(' ')
@@ -132,7 +134,7 @@ def route_to_app():
                 except DatabaseError as e:
                     flask.current_app.logger.error(f'[db]: {e}')
                     return 'Failed', 200
-                return 'Unregistered the Albumlist for your Slack team (re-add albumlistbot to Slack to use again)', 200
+                return 'Unregistered the Albumlist for your Slack team (admins: use `/albumlist slack` to authenticate again)', 200
             return 'OK', 200
     else:
         team_id = form_data['team_id']

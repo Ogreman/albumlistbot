@@ -11,9 +11,9 @@ from albumlistbot.models import mapping, DatabaseError
 
 def route_commands_to_albumlist(team_id, app_url, uri, form_data, *args, **kwargs):
     if not app_url:
-        return 'Failed (use /set_albumlist [url] first to use Albumlist commands)'
+        return 'Failed (use `/set_albumlist [url]` first to use Albumlist commands)'
     if not scrape_links_from_text(app_url):
-        return 'Failed (try /check)'
+        return 'Failed (try `/albumlist check`)'
     full_url = f'{urljoin(app_url, "slack")}/{uri}'
     flask.current_app.logger.info(f'[router]: connecting {team_id} to {full_url}...')
     try:
@@ -93,11 +93,11 @@ def remove_albumlist(team_id, app_url, *args, **kwargs):
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
         return ''
-    return 'Unregistered the Albumlist for your Slack team (re-add albumlistbot to Slack to use again)'
+    return 'Unregistered the Albumlist for your Slack team (admins: use `/albumlist slack` to authenticate again)'
 
 
 def auth_slack(team_id, *args, **kwargs):
-    flask.current_app.logger.info(f'[router]: creating URL to reauthenticate slack for {team_id}')
+    flask.current_app.logger.info(f'[router]: creating URL to authenticate slack for {team_id}')
     url = flask.current_app.config['ADD_TO_SLACK_URL']
     attachment = {
         "fallback": "Slack",
@@ -107,7 +107,7 @@ def auth_slack(team_id, *args, **kwargs):
     }
     response = {
         'response_type': 'ephemeral',
-        'text': 'Click the link to reauthenticate Albumlistbot',
+        'text': 'Click the link to authenticate Albumlistbot',
         'attachments': [attachment],
     }
     return flask.jsonify(response)
