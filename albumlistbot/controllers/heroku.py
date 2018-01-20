@@ -150,7 +150,7 @@ def check_and_update(team_id, app_name, heroku_token):
 
 def check_albumlist(team_id, app_url, heroku_token, *args, **kwargs):
     if not app_url:
-        return 'No albumlist mapped to this team (admins: use /create_albumlist to get started)'
+        return 'No albumlist mapped to this team (admins: use `/albumlist create` to get started)'
     if scrape_links_from_text(app_url):
         flask.current_app.logger.info(f'[router]: checking connection to {app_url} for {team_id}')
         try:
@@ -162,10 +162,10 @@ def check_albumlist(team_id, app_url, heroku_token, *args, **kwargs):
         flask.current_app.logger.info(f'[router]: connection to {app_url} failed: {response.status_code}')
         return f'Failed ({response.status_code})'
     if not heroku_token:
-        return 'Missing Heroku OAuth'
+        return 'Missing Heroku OAuth (admins: use `/albumlist heroku`)'
     if check_and_update(team_id, app_url, heroku_token):
         return 'OK'
-    return 'Failed. Try running /check_albumlist again'
+    return 'Failed. (admins: try running `/albumlist check` again)'
 
 
 def auth_heroku(team_id, *args, **kwargs):
