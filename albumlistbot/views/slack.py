@@ -33,6 +33,7 @@ SLASH_COMMANDS = {
     'clear_cache': slack.clear_cache,
     'restore': slack.restore_from_url,
     'remove': slack.remove_albumlist,
+    'slack': slack.auth_slack,
     'heroku': heroku.auth_heroku,
     'help': list_commands,
 }
@@ -64,7 +65,7 @@ def albumlist_commands():
           /albumlist remove
           /albumlist restore https://some-remote.csv
           /albumlist heroku
-          /albumlist reauth (TODO)
+          /albumlist slack
           /albumlist test https://mynewlist.herokuapp.com (TODO)
           /albumlist process_albums
           /albumlist process_check

@@ -96,6 +96,23 @@ def remove_albumlist(team_id, app_url, *args, **kwargs):
     return 'Unregistered the Albumlist for your Slack team (re-add albumlistbot to Slack to use again)'
 
 
+def auth_slack(team_id, *args, **kwargs):
+    flask.current_app.logger.info(f'[router]: creating URL to reauthenticate slack for {team_id}')
+    url = flask.current_app.config['ADD_TO_SLACK_URL']
+    attachment = {
+        "fallback": "Slack",
+        "title_link": url,
+        "title": "Create OAuth token",
+        "footer": "Albumlistbot",
+    }
+    response = {
+        'response_type': 'ephemeral',
+        'text': 'Click the link to reauthenticate Albumlistbot',
+        'attachments': [attachment],
+    }
+    return flask.jsonify(response)
+
+
 process_albums = functools.partial(route_commands_to_albumlist, uri='process')
 process_check = functools.partial(route_commands_to_albumlist, uri='process/check')
 process_covers = functools.partial(route_commands_to_albumlist, uri='process/covers')
