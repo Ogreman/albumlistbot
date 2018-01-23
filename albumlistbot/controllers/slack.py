@@ -11,7 +11,7 @@ from albumlistbot.models import mapping, DatabaseError
 
 def route_commands_to_albumlist(team_id, app_url, uri, form_data, *args, **kwargs):
     if not app_url:
-        return 'Failed (use `/set_albumlist [url]` first to use Albumlist commands)'
+        return 'Failed (use `/albumlist set [url]` first to use Albumlist commands)'
     if not scrape_links_from_text(app_url):
         return 'Failed (try `/albumlist check`)'
     full_url = f'{urljoin(app_url, "slack")}/{uri}'
