@@ -20,6 +20,30 @@ def list_commands(*args, **kwargs):
     return '\n'.join(SLASH_COMMANDS.keys())
 
 
+def set_album_of_the_day_channel(team_id, form_data, *args, **kwargs):
+    channel_id = form_data['text']
+    flask.current_app.logger.info(f'[router]: setting AOTD channel for {team_id} to {channel_id}')
+    app_url_or_name, heroku_token = mapping.get_app_and_heroku_token_for_team(team_id)
+    with requests.Session() as s:
+        if app_url_or_name and heroku.is_managed(app_url_or_name, heroku_token, session=s):
+            config_dict = {'AOTD_CHANNEL_ID': channel_id}
+            heroku.set_config_variables_for_albumlist(app_url_or_name, heroku_token, config_dict, session=s)
+            return 'Updated the channel for album of the day'
+    return ''
+
+
+def set_album_of_the_day_hour(team_id, form_data, *args, **kwargs):
+    hour = form_data['text']
+    flask.current_app.logger.info(f'[router]: setting AOTD channel for {team_id} to {hour}')
+    app_url_or_name, heroku_token = mapping.get_app_and_heroku_token_for_team(team_id)
+    with requests.Session() as s:
+        if app_url_or_name and heroku.is_managed(app_url_or_name, heroku_token, session=s):
+            config_dict = {'AOTD_HOUR': hour}
+            heroku.set_config_variables_for_albumlist(app_url_or_name, heroku_token, config_dict, session=s)
+            return 'Updated the hour for album of the day'
+    return ''
+
+
 SLASH_COMMANDS = {
     'get': slack.get_albumlist,
     'set': slack.set_albumlist,
@@ -30,6 +54,8 @@ SLASH_COMMANDS = {
     'process_covers': slack.process_covers,
     'process_duplicates': slack.process_duplicates,
     'process_tags': slack.process_tags,
+    'aotd_channel': set_album_of_the_day_channel,
+    'aotd_hour': set_album_of_the_day_hour,
     'clear_cache': slack.clear_cache,
     'restore': slack.restore_from_url,
     'remove': slack.remove_albumlist,
@@ -75,6 +101,8 @@ def albumlist_commands():
           /albumlist process_duplicates
           /albumlist process_tags
           /albumlist clear_cache
+          /albumlist aotd_channel #announcements
+          /albumlist aotd_hour 10
     """
     form_data = flask.request.form.copy()
     team_id = form_data['team_id']
