@@ -117,6 +117,19 @@ def set_config_variables_for_albumlist(app_url_or_name, heroku_token, config_dic
     flask.current_app.logger.error(f'[heroku]: failed to update config variables for {app_url_or_name}: {response.status_code}')
 
 
+def get_config_variable_for_albumlist(app_url_or_name, heroku_token, config_name, session=requests):
+    if scrape_links_from_text(app_url_or_name):
+        app_url_or_name = urlparse(app_url_or_name).hostname.split('.')[0]
+    flask.current_app.logger.info(f'[heroku]: retrieving config variables for {app_url_or_name}...')
+    url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_url_or_name}/config-vars"
+    headers = set_heroku_headers(heroku_token)
+    response = session.get(url, headers=headers)
+    if response.ok:
+        flask.current_app.logger.info(f'[heroku]: retrieved config variables {app_url_or_name}: {response.json()}')
+        return response.json()[config_name]
+    flask.current_app.logger.error(f'[heroku]: failed to retrieve config variables for {app_url_or_name}: {response.status_code}')
+
+
 def check_and_update(team_id, app_name, heroku_token):
     try:
         with requests.Session() as s:
