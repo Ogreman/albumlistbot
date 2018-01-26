@@ -14,16 +14,19 @@ def set_heroku_headers(heroku_token):
     return headers
 
 
-def is_managed(app_url_or_name, heroku_token, session=requests):
+def is_managed(app_url_or_name, session=requests):
     if not heroku_token:
         return False
     if scrape_links_from_text(app_url_or_name):
-        app_url_or_name = urlparse(app_url_or_name).hostname.split('.')[0]
-    flask.current_app.logger.info(f'[heroku]: checking if {app_url_or_name} is managed...')
-    url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_url_or_name}"
+        app_name = urlparse(app_url_or_name).hostname.split('.')[0]
+    flask.current_app.logger.info(f'[heroku]: checking if {app_name} is managed...')
+    url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_name}"
     headers = set_heroku_headers(heroku_token)
     response = session.get(url, headers=headers, timeout=1.5)
     flask.current_app.logger.debug(f'[heroku]: {response.json()}')
+    if response.status_code == 401:
+        flask.current_app.logger.info(f'[heroku]: heroku auth failed...')
+        return bool(refresh_heroku(app_url_or_name, session))
     return response.ok
 
 
@@ -31,7 +34,8 @@ def create_albumlist(team_id, app_url, slack_token, heroku_token, *args, **kwarg
     if not heroku_token:
         return 'Missing Heroku OAuth'
     if not app_url:
-        app_name = create_new_albumlist(team_id, slack_token, heroku_token)
+        with requests.Session() as s:
+            app_name = create_new_albumlist(team_id, slack_token, heroku_token, s)
         if not app_name:
             return 'Failed'
         try:
@@ -97,6 +101,14 @@ def create_new_albumlist(team_id, slack_token, heroku_token, session=requests):
     response = session.post(url, headers=headers, json=payload)
     response_json = response.json()
     flask.current_app.logger.debug(f'[heroku]: {response_json}')
+    if response.status_code == 401:
+        heroku_token = refresh_heroku(team_id, session)
+        if not heroku_token:
+            return
+        headers = set_heroku_headers(heroku_token)
+        response = session.post(url, headers=headers, json=payload)
+        response_json = response.json()
+        flask.current_app.logger.debug(f'[heroku]: {response_json}')
     if response.ok:
         app_name = response_json['app']['name']
         flask.current_app.logger.info(f'[heroku]: created {app_name}')
@@ -197,3 +209,32 @@ def auth_heroku(team_id, *args, **kwargs):
         'attachments': [attachment],
     }
     return flask.jsonify(response)
+
+
+def refresh_heroku(team_id, session=requests):
+    try:
+        refresh_token = mapping.get_heroku_refresh_token_for_team(team_id)
+    except DatabaseError as e:
+        flask.current_app.logger.error(f'[db]: {e}')
+        return    
+    payload = {
+        'grant_type': 'refresh_token',
+        'refresh_token': refresh_token,
+        'client_secret': flask.current_app.config['HEROKU_CLIENT_SECRET'],
+    }
+    flask.current_app.logger.info(f'[heroku]: refreshing heroku for {team_id}...')
+    headers = {'Accept': 'application/vnd.heroku+json; version=3'}
+    response = session.post(constants.HEROKU_TOKEN_URL, data=payload, headers=headers)
+    response_json = response.json()
+    if not response.ok:
+        flask.current_app.logger.error(f'[heroku]: failed to get refresh token for {team_id}: {response.status_code}')
+        flask.current_app.logger.error(f'[heroku]: {response_json}')
+        return
+    access_token = response_json['access_token']
+    try:
+        mapping.set_heroku_token_for_team(team_id, access_token)
+    except DatabaseError as e:
+        flask.current_app.logger.error(f'[db]: {e}')
+        return
+    flask.current_app.logger.info(f'[heroku]: added heroku token to db for {team_id}')
+    return access_token

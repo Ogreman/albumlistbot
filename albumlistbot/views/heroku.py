@@ -38,23 +38,8 @@ def oauth_redirect():
     access_token = response_json['access_token']
     refresh_token = response_json['refresh_token']
     flask.current_app.logger.info(f'[heroku]: {team_id}: {access_token}')
-    payload = {
-        'grant_type': 'refresh_token',
-        'refresh_token': refresh_token,
-        'client_secret': client_secret,
-    }
-    flask.current_app.logger.info(f'[heroku]: getting refresh token for {team_id}...')
-    headers = heroku.set_heroku_headers(access_token)
-    response = requests.post(constants.HEROKU_TOKEN_URL, data=payload, headers=headers)
-    response_json = response.json()
-    if not response.ok:
-        flask.current_app.logger.error(f'[heroku]: failed to get refresh token for {team_id}: {response.status_code}')
-        flask.current_app.logger.error(f'[heroku]: {response_json}')
-        return 'Failed'
-    refreshing_access_token = response_json['access_token']
-    flask.current_app.logger.info(f'[heroku]: {team_id}: {refreshing_access_token}')
     try:
-        mapping.set_heroku_token_for_team(team_id, refreshing_access_token)
+        mapping.set_heroku_and_refresh_token_for_team(team_id, access_token, refresh_token)
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
         return 'Failed'

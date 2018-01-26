@@ -13,6 +13,7 @@ def create_mapping_table():
         app varchar DEFAULT '',
         token varchar DEFAULT '',
         heroku varchar DEFAULT '',
+        heroku_refresh varchar DEFAULT '',
         );"""
     with closing(get_connection()) as conn:
         try:
@@ -106,6 +107,23 @@ def get_team_app_heroku_by_slack(token):
 def get_heroku_token_for_team(team):
     sql = """
         SELECT heroku
+        FROM mapping
+        WHERE team = %s;
+    """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (team,))
+            return cur.fetchone()[0]
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+        except (IndexError, TypeError):
+            return
+
+
+def get_heroku_refresh_token_for_team(team):
+    sql = """
+        SELECT heroku_refresh
         FROM mapping
         WHERE team = %s;
     """
@@ -219,6 +237,22 @@ def set_slack_token_for_team(team, token):
         try:
             cur = conn.cursor()
             cur.execute(sql, (token, team))
+            conn.commit()
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+
+
+def set_heroku_and_refresh_token_for_team(team, token, refresh):
+    sql = """
+        UPDATE mapping
+        SET heroku = %s,
+            heroku_refresh = %s
+        WHERE team = %s;
+        """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (token, refresh, team))
             conn.commit()
         except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
             raise DatabaseError(e)

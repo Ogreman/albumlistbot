@@ -28,5 +28,5 @@ def create_app():
         app.logger.setLevel(logging.DEBUG)
     app.config.from_object(os.environ['APP_SETTINGS'])
     add_blueprints(app)
-    app.logger.info(f'[app]: created with {os.environ["APP_SETTINGS"]}')
+    app.logger.debug(f'[app]: created with {os.environ["APP_SETTINGS"]}')
     return app
