@@ -17,8 +17,7 @@ def set_heroku_headers(heroku_token):
 def is_managed(app_url_or_name, heroku_token, session=requests):
     if not heroku_token:
         return False
-    if scrape_links_from_text(app_url_or_name):
-        app_name = urlparse(app_url_or_name).hostname.split('.')[0]
+    app_name = urlparse(app_url_or_name).hostname.split('.')[0] if scrape_links_from_text(app_url_or_name) else app_url_or_name
     flask.current_app.logger.info(f'[heroku]: checking if {app_name} is managed...')
     url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_name}"
     headers = set_heroku_headers(heroku_token)
