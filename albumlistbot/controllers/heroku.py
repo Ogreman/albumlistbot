@@ -14,7 +14,7 @@ def set_heroku_headers(heroku_token):
     return headers
 
 
-def is_managed(app_url_or_name, session=requests):
+def is_managed(app_url_or_name, heroku_token, session=requests):
     if not heroku_token:
         return False
     if scrape_links_from_text(app_url_or_name):
@@ -216,7 +216,7 @@ def refresh_heroku(team_id, session=requests):
         refresh_token = mapping.get_heroku_refresh_token_for_team(team_id)
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
-        return    
+        return
     payload = {
         'grant_type': 'refresh_token',
         'refresh_token': refresh_token,
