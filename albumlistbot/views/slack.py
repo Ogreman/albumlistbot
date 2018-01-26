@@ -42,6 +42,7 @@ def set_album_of_the_day_hour(team_id, form_data, *args, **kwargs):
 SLASH_COMMANDS = {
     'get': slack.get_albumlist,
     'set': slack.set_albumlist,
+    'count': slack.count_albums,
     'create': heroku.create_albumlist,
     'check': heroku.check_albumlist,
     'process_albums': slack.process_albums,
@@ -83,13 +84,14 @@ def albumlist_commands():
 
     e.g.: /albumlist get
           /albumlist set https://myalbumlist.herokuapp.com
+          /albumlist count
           /albumlist create
           /albumlist check
           /albumlist remove
           /albumlist restore https://some-remote.csv
           /albumlist heroku
           /albumlist slack
-          /albumlist test https://mynewlist.herokuapp.com (TODO)
+          /albumlist test https://mynewlist.herokuapp.com
           /albumlist process_albums
           /albumlist process_check
           /albumlist process_covers

@@ -44,7 +44,7 @@ def is_slack_admin(token, user_id):
 
 
 def get_albumlist(app_url, *args, **kwargs):
-    return app_url
+    return app_url or 'No albumlist mapped to this team (admins: use `/albumlist create` to get started)'
 
 
 def set_albumlist(team_id, form_data, *args, **kwargs):
@@ -120,3 +120,5 @@ process_duplicates = functools.partial(route_commands_to_albumlist, uri='process
 process_tags = functools.partial(route_commands_to_albumlist, uri='process/tags')
 clear_cache = functools.partial(route_commands_to_albumlist, uri='clear')
 restore_from_url = functools.partial(route_commands_to_albumlist, uri='restore_from_url')
+count_albums = functools.partial(route_commands_to_albumlist, uri='count')
+test_albumlist = functools.partial(route_commands_to_albumlist, uri='admin/check')
