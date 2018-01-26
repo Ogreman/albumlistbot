@@ -45,6 +45,7 @@ SLASH_COMMANDS = {
     'count': slack.count_albums,
     'create': heroku.create_albumlist,
     'check': heroku.check_albumlist,
+    'test': slack.test_albumlist,
     'process_albums': slack.process_albums,
     'process_check': slack.process_check,
     'process_covers': slack.process_covers,
@@ -91,7 +92,7 @@ def albumlist_commands():
           /albumlist restore https://some-remote.csv
           /albumlist heroku
           /albumlist slack
-          /albumlist test https://mynewlist.herokuapp.com
+          /albumlist test
           /albumlist process_albums
           /albumlist process_check
           /albumlist process_covers
