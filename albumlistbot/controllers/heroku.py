@@ -228,6 +228,9 @@ def refresh_heroku(team_id, session=requests):
     except DatabaseError as e:
         flask.current_app.logger.error(f'[db]: {e}')
         return
+    if not refresh_token:
+        flask.current_app.logger.error(f'[heroku]: refresh token missing for {team_id}')
+        return
     payload = {
         'grant_type': 'refresh_token',
         'refresh_token': refresh_token,
