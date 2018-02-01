@@ -147,8 +147,10 @@ def albumlist_name(app_url, form_data, heroku_token, *args, **kwargs):
         if is_managed(app_url, heroku_token, session=s):
             if name:
                 set_config_variables_for_albumlist(app_url, heroku_token, {'LIST_NAME': name}, session=s)
+                return ':white_check_mark: {name}'
             else:
                 return get_config_variable_for_albumlist(app_url, heroku_token, 'LIST_NAME', session=s)
+    return 'Failed'
 
 
 def check_and_update(team_id, app_name, heroku_token):
