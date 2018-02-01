@@ -141,6 +141,16 @@ def get_config_variable_for_albumlist(app_url_or_name, heroku_token, config_name
     flask.current_app.logger.error(f'[heroku]: failed to retrieve config variables for {app_url_or_name}: {response.status_code}')
 
 
+def albumlist_name(app_url, form_data, heroku_token, *args, **kwargs):
+    name = form_data['text'].strip()
+    with requests.Session() as s:
+        if is_managed(app_url, heroku_token, session=s):
+            if name:
+                set_config_variables_for_albumlist(app_url, heroku_token, {'LIST_NAME': name}, session=s)
+            else:
+                return get_config_variable_for_albumlist(app_url, heroku_token, 'LIST_NAME', session=s)
+
+
 def check_and_update(team_id, app_name, heroku_token):
     try:
         with requests.Session() as s:

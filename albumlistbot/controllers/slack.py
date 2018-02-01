@@ -43,15 +43,11 @@ def is_slack_admin(token, user_id):
     return info.body['user']['is_admin']
 
 
-def get_albumlist(app_url, *args, **kwargs):
-    return app_url or 'No albumlist mapped to this team (admins: use `/albumlist create` to get started)'
-
-
-def set_albumlist(team_id, form_data, *args, **kwargs):
+def albumlist_url(app_url, team_id, form_data, *args, **kwargs):
     try:
         app_url = scrape_links_from_text(form_data['text'])[0]
     except IndexError:
-        return 'Provide an URL for the Albumlist'
+        return app_url or 'No albumlist mapped to this team (admins: use `/albumlist create` or `/albumlist url [url]` to get started)'
     flask.current_app.logger.info(f'[router]: registering {team_id} with {app_url}')
     try:
         mapping.set_mapping_for_team(team_id, app_url)
