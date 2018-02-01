@@ -217,7 +217,11 @@ def auth():
                 app_url_or_name, heroku_token = mapping.get_app_and_heroku_token_for_team(team_id)
                 with requests.Session() as s:
                     if app_url_or_name and heroku.is_managed(app_url_or_name, heroku_token, session=s):
-                        config_dict = {'SLACK_OAUTH_TOKEN': access_token}
+                        config_dict = {
+                            'SLACK_OAUTH_TOKEN': access_token,
+                            'APP_TOKEN_BOT': flask.current_app.config['APP_TOKEN'],
+                            'ALBUMLISTBOT_URL': flask.current_app.config['ALBUMLISTBOT_URL'],
+                        }
                         heroku.set_config_variables_for_albumlist(app_url_or_name, heroku_token, config_dict, session=s)
                         flask.current_app.logger.info(f'[router]: updated albumlist with new access token')
             else:
