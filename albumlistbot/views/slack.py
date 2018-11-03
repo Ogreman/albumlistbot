@@ -51,6 +51,7 @@ SLASH_COMMANDS = {
     'process_covers': slack.process_covers,
     'process_duplicates': slack.process_duplicates,
     'process_tags': slack.process_tags,
+    'process_unavailable': slack.process_unavailable,
     'aotd_channel': get_or_set_album_of_the_day_channel,
     # 'aotd_hour': set_album_of_the_day_hour,
     'clear_cache': slack.clear_cache,
@@ -59,6 +60,7 @@ SLASH_COMMANDS = {
     'slack': slack.auth_slack,
     'heroku': heroku.auth_heroku,
     'help': list_commands,
+    'feedback': slack.send_feedback,
 }
 
 
@@ -98,6 +100,7 @@ def albumlist_commands():
           /albumlist process_covers
           /albumlist process_duplicates
           /albumlist process_tags
+          /albumlist process_unavailable
           /albumlist clear_cache
           /albumlist aotd_channel #announcements
           /albumlist aotd_hour 10 (TODO)

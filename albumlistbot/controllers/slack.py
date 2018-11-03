@@ -109,11 +109,16 @@ def auth_slack(team_id, *args, **kwargs):
     return flask.jsonify(response)
 
 
+def send_feedback(team_id, form_data, *args, **kwargs):
+    form_data['text']
+
+
 process_albums = functools.partial(route_commands_to_albumlist, uri='process')
 process_check = functools.partial(route_commands_to_albumlist, uri='process/check')
 process_covers = functools.partial(route_commands_to_albumlist, uri='process/covers')
 process_duplicates = functools.partial(route_commands_to_albumlist, uri='process/duplicates')
 process_tags = functools.partial(route_commands_to_albumlist, uri='process/tags')
+process_unavailable = functools.partial(route_commands_to_albumlist, uri='process/unavailable')
 clear_cache = functools.partial(route_commands_to_albumlist, uri='clear')
 restore_from_url = functools.partial(route_commands_to_albumlist, uri='restore_from_url')
 count_albums = functools.partial(route_commands_to_albumlist, uri='count')
