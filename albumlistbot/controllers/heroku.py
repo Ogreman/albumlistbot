@@ -259,8 +259,10 @@ def scale_workers(app_url, form_data, heroku_token, *args, **kwargs):
     with requests.Session() as s:
         if is_managed(app_url, heroku_token, session=s):
             if quantity:
-                scale_formation(app_url, heroku_token, quantity=int(quantity), session=s)
-                return f':white_check_mark: {quantity}'
+                if scale_formation(app_url, heroku_token, quantity=int(quantity), session=s):
+                    return f':white_check_mark: {quantity}'
+                else:
+                    return f':red_circle: failed to scale'
             else:
                 return scale_formation(app_url, heroku_token, session=s)
     return 'Failed'
@@ -280,8 +282,9 @@ def scale_formation(app_url_or_name, heroku_token, quantity=None, formation_id_o
         response = session.patch(url, headers=headers, json=payload)
     if response.ok:
         flask.current_app.logger.info(f'[heroku]: scaled {app_url_or_name}: {response.json()}')
-        return
+        return True
     flask.current_app.logger.error(f'[heroku]: failed to scale formation for {app_url_or_name}: {response.status_code}')
+    flask.current_app.logger.debug(f'[heroku]: {response.text}')
 
 
 """
