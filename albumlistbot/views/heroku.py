@@ -2,7 +2,6 @@ import flask
 import requests
 
 from albumlistbot import constants
-from albumlistbot.controllers import heroku
 from albumlistbot.models import DatabaseError, mapping
 
 

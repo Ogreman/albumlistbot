@@ -34,11 +34,6 @@ def get_or_set_album_of_the_day_channel(team_id, form_data, *args, **kwargs):
     return ''
 
 
-def set_album_of_the_day_hour(team_id, form_data, *args, **kwargs):
-    # TODO: manipulate heroku scheduler addon
-    pass
-
-
 SLASH_COMMANDS = {
     'name': heroku.albumlist_name,
     'url': slack.albumlist_url,
@@ -53,10 +48,10 @@ SLASH_COMMANDS = {
     'process_tags': slack.process_tags,
     'process_unavailable': slack.process_unavailable,
     'aotd_channel': get_or_set_album_of_the_day_channel,
-    # 'aotd_hour': set_album_of_the_day_hour,
     'clear_cache': slack.clear_cache,
     'restore': slack.restore_from_url,
     'remove': slack.remove_albumlist,
+    'scale': heroku.scale_workers,
     'slack': slack.auth_slack,
     'heroku': heroku.auth_heroku,
     'help': list_commands,
@@ -103,7 +98,6 @@ def albumlist_commands():
           /albumlist process_unavailable
           /albumlist clear_cache
           /albumlist aotd_channel #announcements
-          /albumlist aotd_hour 10 (TODO)
     """
     form_data = flask.request.form.copy()
     team_id = form_data['team_id']
