@@ -268,17 +268,28 @@ def scale_workers(app_url, form_data, heroku_token, *args, **kwargs):
     return 'Failed'
 
 
-def scale_formation(app_url_or_name, heroku_token, quantity=None, formation_id_or_type="worker", session=requests):
+def scale_formation(app_url_or_name, heroku_token, quantity=None, session=requests):
     if scrape_links_from_text(app_url_or_name):
         app_url_or_name = urlparse(app_url_or_name).hostname.split('.')[0]
-    url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_url_or_name}/formation/{formation_id_or_type}"
+    url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_url_or_name}/formation"
     headers = set_heroku_headers(heroku_token)
     if quantity is None:
         response_json = session.get(url, headers=headers).json()
-        return f"{response_json['quantity']} x {response_json['size']}"
+        return "\n".join([f"{dyno['quantity']} x {dyno['type']}" for dyno in response_json])
     else:
         flask.current_app.logger.info(f'[heroku]: scaling dyno formation to {quantity} for {app_url_or_name}...')
-        payload = {"quantity": quantity, "size": "standard-1X"} if quantity > 1 else {"quantity": 1, "size": "hobby"}
+        payload = {"updates": [
+            {
+                "quantity": 1,
+                "size": "standard-1X" if quantity > 1 else "hobby",
+                "type": "web"
+            },
+            {
+                "quantity": quantity,
+                "size": "standard-1X" if quantity > 1 else "hobby",
+                "type": "worker"
+            },
+        ]}
         response = session.patch(url, headers=headers, json=payload)
     if response.ok:
         flask.current_app.logger.info(f'[heroku]: scaled {app_url_or_name}: {response.json()}')
