@@ -258,13 +258,7 @@ def scale_workers(app_url, form_data, heroku_token, *args, **kwargs):
     quantity = form_data['text'].strip()
     with requests.Session() as s:
         if is_managed(app_url, heroku_token, session=s):
-            if quantity:
-                if scale_formation(app_url, heroku_token, quantity=int(quantity), session=s):
-                    return f':white_check_mark: {quantity}'
-                else:
-                    return f':red_circle: failed to scale'
-            else:
-                return scale_formation(app_url, heroku_token, session=s)
+            return scale_formation(app_url, heroku_token, quantity=int(quantity), session=s)
     return 'Failed'
 
 
@@ -273,11 +267,11 @@ def scale_formation(app_url_or_name, heroku_token, quantity=None, session=reques
         app_url_or_name = urlparse(app_url_or_name).hostname.split('.')[0]
     url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_url_or_name}/formation"
     headers = set_heroku_headers(heroku_token)
-    if quantity is None:
-        response_json = session.get(url, headers=headers).json()
-        return "\n".join([f"{dyno['quantity']} x {dyno['type']} ({dyno['size']})" for dyno in response_json])
+    if quantity:
+        response = session.get(url, headers=headers)
     else:
         flask.current_app.logger.info(f'[heroku]: scaling dyno formation to {quantity} for {app_url_or_name}...')
+        quantity = int(quantity)
         payload = {"updates": [
             {
                 "quantity": 1,
@@ -292,10 +286,12 @@ def scale_formation(app_url_or_name, heroku_token, quantity=None, session=reques
         ]}
         response = session.patch(url, headers=headers, json=payload)
     if response.ok:
-        flask.current_app.logger.info(f'[heroku]: scaled {app_url_or_name}: {response.json()}')
-        return True
+        response_json = response.json()
+        flask.current_app.logger.debug(f'[heroku]: current scale for {app_url_or_name}: {response_json}')
+        return "\n".join([f"{dyno['quantity']} x {dyno['type']} ({dyno['size']})" for dyno in response_json])
     flask.current_app.logger.error(f'[heroku]: failed to scale formation for {app_url_or_name}: {response.status_code}')
     flask.current_app.logger.debug(f'[heroku]: {response.text}')
+    return f':red_circle: failed to scale'
 
 
 """
