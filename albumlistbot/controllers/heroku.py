@@ -258,7 +258,7 @@ def scale_workers(app_url, form_data, heroku_token, *args, **kwargs):
     quantity = form_data['text'].strip()
     with requests.Session() as s:
         if is_managed(app_url, heroku_token, session=s):
-            return scale_formation(app_url, heroku_token, quantity=int(quantity), session=s)
+            return scale_formation(app_url, heroku_token, quantity=quantity, session=s)
     return 'Failed'
 
 
