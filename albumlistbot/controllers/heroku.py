@@ -267,11 +267,9 @@ def scale_formation(app_url_or_name, heroku_token, quantity=None, session=reques
         app_url_or_name = urlparse(app_url_or_name).hostname.split('.')[0]
     url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_url_or_name}/formation"
     headers = set_heroku_headers(heroku_token)
-    if quantity:
-        response = session.get(url, headers=headers)
-    else:
-        flask.current_app.logger.info(f'[heroku]: scaling dyno formation to {quantity} for {app_url_or_name}...')
+    try:
         quantity = int(quantity)
+        flask.current_app.logger.info(f'[heroku]: scaling dyno formation to {quantity} for {app_url_or_name}...')
         payload = {"updates": [
             {
                 "quantity": 1,
@@ -285,6 +283,8 @@ def scale_formation(app_url_or_name, heroku_token, quantity=None, session=reques
             },
         ]}
         response = session.patch(url, headers=headers, json=payload)
+    except ValueError:
+        response = session.get(url, headers=headers)
     if response.ok:
         response_json = response.json()
         flask.current_app.logger.debug(f'[heroku]: current scale for {app_url_or_name}: {response_json}')
