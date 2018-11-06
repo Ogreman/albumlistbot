@@ -275,7 +275,7 @@ def scale_formation(app_url_or_name, heroku_token, quantity=None, session=reques
     headers = set_heroku_headers(heroku_token)
     if quantity is None:
         response_json = session.get(url, headers=headers).json()
-        return "\n".join([f"{dyno['quantity']} x {dyno['type']} ({dyno['size']}" for dyno in response_json])
+        return "\n".join([f"{dyno['quantity']} x {dyno['type']} ({dyno['size']})" for dyno in response_json])
     else:
         flask.current_app.logger.info(f'[heroku]: scaling dyno formation to {quantity} for {app_url_or_name}...')
         payload = {"updates": [
