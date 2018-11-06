@@ -36,7 +36,8 @@ def oauth_redirect():
         return 'Failed'
     access_token = response_json['access_token']
     refresh_token = response_json['refresh_token']
-    flask.current_app.logger.info(f'[heroku]: {team_id}: {access_token}')
+    flask.current_app.logger.debug(f'[heroku]: {team_id} access: {access_token}')
+    flask.current_app.logger.debug(f'[heroku]: {team_id} refresh: {refresh_token}')
     try:
         mapping.set_heroku_and_refresh_token_for_team(team_id, access_token, refresh_token)
     except DatabaseError as e:
