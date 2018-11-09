@@ -1,7 +1,6 @@
 import functools
 import json
-import re
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 
 import flask
 import requests

@@ -22,7 +22,7 @@ def is_managed(app_url_or_name, heroku_token, session=requests):
     url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_name}"
     headers = set_heroku_headers(heroku_token)
     response = session.get(url, headers=headers, timeout=1.5)
-    flask.current_app.logger.debug(f'[heroku]: {response.json()}')
+    flask.current_app.logger.debug(f'[heroku][{response.status_code}]: {response.json()}')
     if response.status_code == 401:
         flask.current_app.logger.info(f'[heroku]: heroku auth failed...')
         return bool(refresh_heroku(app_url_or_name, session))
@@ -43,33 +43,31 @@ def create_albumlist(team_id, app_url, slack_token, heroku_token, *args, **kwarg
             flask.current_app.logger.error(f'[db]: {e}')
             return 'Failed'
         return 'Creating new albumlist...'
-    else:
-        attachment = {
-            'fallback': 'Replace existing list?',
-            'title': 'Replace existing list?',
-            'callback_id': f'create_list_{team_id}',
-            'actions': [
-                {
-                    'name': 'yes',
-                    'text': 'Yes',
-                    'type': 'button',
-                    'value': team_id,
-                },
-                {
-                    'name': 'no',
-                    'text': 'No',
-                    'type': 'button',
-                    'value': team_id,
-                }
-            ],
-        }
-        response = {
-            'response_type': 'ephemeral',
-            'text': f'An existing albumlist was found...',
-            'attachments': [attachment],
-        }
-        return flask.jsonify(response)
-    return ''
+    attachment = {
+        'fallback': 'Replace existing list?',
+        'title': 'Replace existing list?',
+        'callback_id': f'create_list_{team_id}',
+        'actions': [
+            {
+                'name': 'yes',
+                'text': 'Yes',
+                'type': 'button',
+                'value': team_id,
+            },
+            {
+                'name': 'no',
+                'text': 'No',
+                'type': 'button',
+                'value': team_id,
+            }
+        ],
+    }
+    response = {
+        'response_type': 'ephemeral',
+        'text': f'An existing albumlist was found...',
+        'attachments': [attachment],
+    }
+    return flask.jsonify(response)
 
 
 def create_new_albumlist(team_id, slack_token, heroku_token, session=requests):

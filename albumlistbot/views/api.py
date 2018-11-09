@@ -6,8 +6,8 @@ from albumlistbot.models import DatabaseError, mapping
 
 
 api_blueprint = flask.Blueprint(name='api',
-                               import_name=__name__,
-                               url_prefix='/api')
+                                import_name=__name__,
+                                url_prefix='/api')
 
 
 @api_blueprint.after_request

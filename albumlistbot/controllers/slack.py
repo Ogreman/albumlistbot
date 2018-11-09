@@ -110,7 +110,7 @@ def auth_slack(team_id, *args, **kwargs):
 
 
 def send_feedback(team_id, form_data, *args, **kwargs):
-    form_data['text']
+    pass
 
 
 process_albums = functools.partial(route_commands_to_albumlist, uri='process')
