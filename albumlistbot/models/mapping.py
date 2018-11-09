@@ -131,7 +131,7 @@ def get_heroku_refresh_token_for_team(team):
         try:
             cur = conn.cursor()
             cur.execute(sql, (team,))
-            return cur.fetchone()
+            return cur.fetchone()[0]
         except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
             raise DatabaseError(e)
         except (IndexError, TypeError):
