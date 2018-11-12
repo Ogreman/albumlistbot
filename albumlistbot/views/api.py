@@ -27,6 +27,16 @@ def api_mappings():
         return flask.jsonify({'text': 'failed'}), 500
 
 
+@api_blueprint.route('/mapping/<team_id>', methods=['GET'])
+def api_map_team_id_to_app_url(team_id):
+    try:
+        return flask.jsonify(mapping.get_app_url_for_team(team_id)), 200
+    except DatabaseError as e:
+        flask.current_app.logger.error('[db]: failed to get mappings')
+        flask.current_app.logger.error(f'[db]: {e}')
+        return flask.jsonify({'text': 'failed'}), 500
+
+
 @api_blueprint.route('', methods=['GET'])
 def all_endpoints():
     rules = [
