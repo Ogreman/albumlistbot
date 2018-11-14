@@ -15,8 +15,8 @@ def set_heroku_headers(heroku_token):
 
 
 def is_managed(team_id, app_url_or_name, heroku_token, session=requests):
-    if not heroku_token:
-        return False
+    if not heroku_token or not app_url_or_name:
+        return
     app_name = urlparse(app_url_or_name).hostname.split('.')[0] if scrape_links_from_text(app_url_or_name) else app_url_or_name
     flask.current_app.logger.info(f'[heroku]: checking if {app_name} is managed...')
     url = f"{urljoin(constants.HEROKU_API_URL, 'apps')}/{app_name}"
@@ -25,8 +25,8 @@ def is_managed(team_id, app_url_or_name, heroku_token, session=requests):
     flask.current_app.logger.debug(f'[heroku][{response.status_code}]: {response.json()}')
     if response.status_code == 401:
         flask.current_app.logger.info(f'[heroku]: heroku auth failed...')
-        return bool(refresh_heroku(team_id, session))
-    return response.ok
+        return refresh_heroku(team_id, session)
+    return heroku_token
 
 
 def create_albumlist(team_id, app_url, slack_token, heroku_token, *args, **kwargs):
@@ -142,7 +142,8 @@ def get_config_variable_for_albumlist(app_url_or_name, heroku_token, config_name
 def albumlist_name(team_id, app_url, form_data, heroku_token, *args, **kwargs):
     name = form_data['text'].strip()
     with requests.Session() as s:
-        if is_managed(team_id, app_url, heroku_token, session=s):
+        heroku_token = is_managed(team_id, app_url, heroku_token, session=s)
+        if heroku_token:
             if name:
                 set_config_variables_for_albumlist(app_url, heroku_token, {'LIST_NAME': name}, session=s)
                 return f':white_check_mark: {name}'
@@ -154,7 +155,8 @@ def albumlist_name(team_id, app_url, form_data, heroku_token, *args, **kwargs):
 def check_and_update(team_id, app_name, heroku_token):
     try:
         with requests.Session() as s:
-            if not is_managed(team_id, app_name, heroku_token, session=s):
+            heroku_token = is_managed(team_id, app_name, heroku_token, session=s)
+            if not heroku_token:
                 return False
             url = urljoin(constants.HEROKU_API_URL, f'apps/{app_name}/dynos')
             headers = set_heroku_headers(heroku_token)
@@ -255,7 +257,8 @@ def refresh_heroku(team_id, session=requests):
 def scale_workers(team_id, app_url, form_data, heroku_token, *args, **kwargs):
     quantity = form_data['text'].strip()
     with requests.Session() as s:
-        if is_managed(team_id, app_url, heroku_token, session=s):
+        heroku_token = is_managed(team_id, app_url, heroku_token, session=s)
+        if heroku_token:
             return scale_formation(app_url, heroku_token, quantity=quantity, session=s)
     return 'Failed'
 
