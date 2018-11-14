@@ -24,7 +24,7 @@ def get_or_set_album_of_the_day_channel(team_id, form_data, *args, **kwargs):
     flask.current_app.logger.info(f'[router]: setting AOTD channel for {team_id} to {channel_id}')
     app_url_or_name, heroku_token = mapping.get_app_and_heroku_token_for_team(team_id)
     with requests.Session() as s:
-        if app_url_or_name and heroku.is_managed(app_url_or_name, heroku_token, session=s):
+        if app_url_or_name and heroku.is_managed(team_id, app_url_or_name, heroku_token, session=s):
             if not channel_id:
                 return heroku.get_config_variable_for_albumlist(app_url_or_name, heroku_token, 'AOTD_CHANNEL_ID', session=s)
             config_dict = {'AOTD_CHANNEL_ID': channel_id}
@@ -212,7 +212,7 @@ def auth():
                 flask.current_app.logger.info(f'[router]: set new token {access_token} for {team_id}')
                 app_url_or_name, heroku_token = mapping.get_app_and_heroku_token_for_team(team_id)
                 with requests.Session() as s:
-                    if app_url_or_name and heroku.is_managed(app_url_or_name, heroku_token, session=s):
+                    if app_url_or_name and heroku.is_managed(team_id, app_url_or_name, heroku_token, session=s):
                         config_dict = {
                             'SLACK_OAUTH_TOKEN': access_token,
                             'APP_TOKEN_BOT': flask.current_app.config['APP_TOKEN'],
