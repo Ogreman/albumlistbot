@@ -73,7 +73,7 @@ def slack_check(func):
             if abs(time.time() - float(timestamp)) > 60 * 5:
                 return
             sig_basestring = f'v0:{timestamp}:{request_body}'.encode()
-            my_signature = 'v0=' + hmac.new(slack_signing_secret, sig_basestring).hexdigest()
+            my_signature = 'v0=' + hmac.new(slack_signing_secret, sig_basestring, 'sha256').hexdigest()
             slack_signature = flask.request.headers['X-Slack-Signature']
         except KeyError:
             return
