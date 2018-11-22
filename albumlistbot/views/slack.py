@@ -74,9 +74,7 @@ def slack_check(func):
                 return
             sig_basestring = ('v0:' + timestamp + ':' + request_body).encode()
             my_signature = hmac.new(slack_signing_secret, sig_basestring).hexdigest()
-            print(my_signature)
             slack_signature = flask.request.headers['X-Slack-Signature']
-            print(slack_signature)
         except KeyError:
             return
         return hmac.compare_digest(my_signature, slack_signature)
