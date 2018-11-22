@@ -82,9 +82,9 @@ def slack_check(func):
     @functools.wraps(func)
     def wraps(*args, **kwargs):
         if (
-            ('payload' in flask.request.form)
-            or slack_blueprint.config['DEBUG']
+            slack_blueprint.config['DEBUG']
             or check_signature()
+            or 'payload' in flask.request.form
         ):
             return func(*args, **kwargs)
         flask.current_app.logger.error('[access]: failed slack-check test')
