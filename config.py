@@ -19,6 +19,7 @@ class Config(object):
     CSRF_TOKEN = ''.join(random.choice(string.ascii_letters) for _ in range(25))
     ALBUMLISTBOT_URL = os.environ.get('ALBUMLISTBOT_URL')
     ADD_TO_SLACK_URL = os.environ.get('ADD_TO_SLACK_URL')
+    SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET')
 
 
 class ProductionConfig(Config):

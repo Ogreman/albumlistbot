@@ -1,5 +1,7 @@
 import functools
+import hmac
 import json
+import time
 from urllib.parse import urljoin
 
 import flask
@@ -63,11 +65,29 @@ def slack_check(func):
     """
     Decorator for locking down Slack endpoints to registered apps only
     """
+    def check_signature():
+        slack_signing_secret = slack_blueprint.config['SLACK_SIGNING_SECRET'].encode()
+        request_body = flask.request.get_data().decode()
+        try:
+            timestamp = flask.request.headers['X-Slack-Request-Timestamp']
+            if abs(time.time() - float(timestamp)) > 60 * 5:
+                return
+            sig_basestring = ('v0:' + timestamp + ':' + request_body).encode()
+            my_signature = hmac.new(slack_signing_secret, sig_basestring).hexdigest()
+            print(my_signature)
+            slack_signature = flask.request.headers['X-Slack-Signature']
+            print(slack_signature)
+        except KeyError:
+            return
+        return hmac.compare_digest(my_signature, slack_signature)
+
     @functools.wraps(func)
     def wraps(*args, **kwargs):
-        if ('payload' in flask.request.form) \
-        or (flask.request.form.get('token', '') == slack_blueprint.config['APP_TOKEN']) \
-        or slack_blueprint.config['DEBUG']:
+        if (
+            ('payload' in flask.request.form)
+            or slack_blueprint.config['DEBUG']
+            or check_signature()
+        ):
             return func(*args, **kwargs)
         flask.current_app.logger.error('[access]: failed slack-check test')
         flask.abort(403)
