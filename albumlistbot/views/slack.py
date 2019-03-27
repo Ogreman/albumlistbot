@@ -44,6 +44,7 @@ SLASH_COMMANDS = {
     'check': heroku.check_albumlist,
     'test': slack.test_albumlist,
     'process_albums': slack.process_albums,
+    'process_attribution': slack.process_attribution,
     'process_check': slack.process_check,
     'process_covers': slack.process_covers,
     'process_duplicates': slack.process_duplicates,
@@ -109,6 +110,7 @@ def albumlist_commands():
           /albumlist slack
           /albumlist test
           /albumlist process_albums
+          /albumlist process_attribution
           /albumlist process_check
           /albumlist process_covers
           /albumlist process_duplicates

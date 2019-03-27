@@ -114,6 +114,7 @@ def send_feedback(team_id, form_data, *args, **kwargs):
 
 
 process_albums = functools.partial(route_commands_to_albumlist, uri='process')
+process_attribution = functools.partial(route_commands_to_albumlist, uri='process/attribution')
 process_check = functools.partial(route_commands_to_albumlist, uri='process/check')
 process_covers = functools.partial(route_commands_to_albumlist, uri='process/covers')
 process_duplicates = functools.partial(route_commands_to_albumlist, uri='process/duplicates')
