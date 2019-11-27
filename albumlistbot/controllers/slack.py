@@ -118,6 +118,7 @@ process_attribution = functools.partial(route_commands_to_albumlist, uri='proces
 process_check = functools.partial(route_commands_to_albumlist, uri='process/check')
 process_covers = functools.partial(route_commands_to_albumlist, uri='process/covers')
 process_duplicates = functools.partial(route_commands_to_albumlist, uri='process/duplicates')
+process_released = functools.partial(route_commands_to_albumlist, uri='process/released')
 process_tags = functools.partial(route_commands_to_albumlist, uri='process/tags')
 process_unavailable = functools.partial(route_commands_to_albumlist, uri='process/unavailable')
 clear_cache = functools.partial(route_commands_to_albumlist, uri='clear')

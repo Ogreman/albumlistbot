@@ -48,6 +48,7 @@ SLASH_COMMANDS = {
     'process_check': slack.process_check,
     'process_covers': slack.process_covers,
     'process_duplicates': slack.process_duplicates,
+    'process_released': slack.process_released,
     'process_tags': slack.process_tags,
     'process_unavailable': slack.process_unavailable,
     'aotd_channel': get_or_set_album_of_the_day_channel,
@@ -114,6 +115,7 @@ def albumlist_commands():
           /albumlist process_check
           /albumlist process_covers
           /albumlist process_duplicates
+          /albumlist process_released
           /albumlist process_tags
           /albumlist process_unavailable
           /albumlist clear_cache
