@@ -154,7 +154,8 @@ def route_to_app():
     if 'payload' in form_data:
         json_data = json.loads(form_data['payload'])
         team_id = json_data['team']['id']
-        if json_data['callback_id'] == f'create_list_{team_id}':
+        callback_id = json_data.get('callback_id', '')
+        if callback_id == f'create_list_{team_id}':
             if 'yes' in json_data['actions'][0]['name']:
                 slack_token, heroku_token = mapping.get_tokens_for_team(team_id)
                 if not slack_token:
@@ -171,7 +172,7 @@ def route_to_app():
                     return 'Failed', 200
                 return 'Creating new albumlist...', 200
             return 'OK', 200
-        elif json_data['callback_id'] == f'delete_list_{team_id}':
+        elif callback_id == f'delete_list_{team_id}':
             if 'yes' in json_data['actions'][0]['name']:
                 try:
                     mapping.delete_from_mapping(team_id)
