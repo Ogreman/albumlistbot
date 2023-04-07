@@ -1,12 +1,21 @@
 from contextlib import closing
 import json
-
+import os
 import psycopg2
 
 from albumlistbot.models import DatabaseError, get_connection
 
 
+DISABLE_DATABASE = bool(int(os.environ.get("DISABLE_DATABASE", "0")))
+
+
+def get_from_env(team, variable):
+    return os.environ.get(f"{team.upper()}_{variable.upper()}", "")
+
+
 def create_mapping_table():
+    if DISABLE_DATABASE:
+        return
     sql = """
         CREATE TABLE mapping (
         team varchar UNIQUE,
@@ -25,6 +34,8 @@ def create_mapping_table():
 
 
 def get_mappings():
+    if DISABLE_DATABASE:
+        return
     sql = """
         SELECT team, app FROM mapping;
     """
@@ -38,6 +49,8 @@ def get_mappings():
 
 
 def team_exists(team):
+    if DISABLE_DATABASE:
+        return any(key.startswith(team) for key in os.environ.keys())
     sql = """
         SELECT *
         FROM mapping
@@ -56,6 +69,8 @@ def team_exists(team):
 
 
 def get_app_url_for_team(team):
+    if DISABLE_DATABASE:
+        return get_from_env(team, "app")
     sql = """
         SELECT app
         FROM mapping
@@ -73,6 +88,8 @@ def get_app_url_for_team(team):
 
 
 def get_slack_token_for_team(team):
+    if DISABLE_DATABASE:
+        return get_from_env(team, "token")
     sql = """
         SELECT token
         FROM mapping
@@ -90,6 +107,8 @@ def get_slack_token_for_team(team):
 
 
 def get_team_app_heroku_by_slack(token):
+    if DISABLE_DATABASE:
+        return
     sql = """
         SELECT team, app, heroku
         FROM mapping
@@ -105,6 +124,8 @@ def get_team_app_heroku_by_slack(token):
 
 
 def get_heroku_token_for_team(team):
+    if DISABLE_DATABASE:
+        return get_from_env(team, "heroku")
     sql = """
         SELECT heroku
         FROM mapping
@@ -122,6 +143,8 @@ def get_heroku_token_for_team(team):
 
 
 def get_heroku_refresh_token_for_team(team):
+    if DISABLE_DATABASE:
+        return get_from_env(team, "heroku_refresh")
     sql = """
         SELECT heroku_refresh
         FROM mapping
@@ -139,6 +162,11 @@ def get_heroku_refresh_token_for_team(team):
 
 
 def get_app_and_slack_token_for_team(team):
+    if DISABLE_DATABASE:
+        return (
+            get_from_env(team, "app"),
+            get_from_env(team, "token"),
+        )
     sql = """
         SELECT app, token
         FROM mapping
@@ -154,6 +182,11 @@ def get_app_and_slack_token_for_team(team):
 
 
 def get_tokens_for_team(team):
+    if DISABLE_DATABASE:
+        return (
+            get_from_env(team, "token"),
+            get_from_env(team, "heroku"),
+        )
     sql = """
         SELECT token, heroku
         FROM mapping
@@ -169,6 +202,11 @@ def get_tokens_for_team(team):
 
 
 def get_app_and_heroku_token_for_team(team):
+    if DISABLE_DATABASE:
+        return (
+            get_from_env(team, "app"),
+            get_from_env(team, "heroku"),
+        )
     sql = """
         SELECT app, heroku
         FROM mapping
@@ -184,6 +222,12 @@ def get_app_and_heroku_token_for_team(team):
 
 
 def get_app_slack_heroku_for_team(team):
+    if DISABLE_DATABASE:
+        return (
+            get_from_env(team, "app"),
+            get_from_env(team, "token"),
+            get_from_env(team, "heroku"),
+        )
     sql = """
         SELECT app, token, heroku
         FROM mapping
@@ -199,6 +243,8 @@ def get_app_slack_heroku_for_team(team):
 
 
 def add_team_with_token(team, token):
+    if DISABLE_DATABASE:
+        return
     sql = """
         INSERT INTO mapping (team, token) VALUES (%s, %s);"""
     with closing(get_connection()) as conn:
@@ -213,6 +259,8 @@ def add_team_with_token(team, token):
 
 
 def set_mapping_for_team(team, app_url):
+    if DISABLE_DATABASE:
+        return
     sql = """
         UPDATE mapping
         SET app = %s
@@ -228,6 +276,8 @@ def set_mapping_for_team(team, app_url):
 
 
 def set_slack_token_for_team(team, token):
+    if DISABLE_DATABASE:
+        return
     sql = """
         UPDATE mapping
         SET token = %s
@@ -243,6 +293,8 @@ def set_slack_token_for_team(team, token):
 
 
 def set_heroku_and_refresh_token_for_team(team, token, refresh):
+    if DISABLE_DATABASE:
+        return
     sql = """
         UPDATE mapping
         SET heroku = %s,
@@ -259,6 +311,8 @@ def set_heroku_and_refresh_token_for_team(team, token, refresh):
 
 
 def set_heroku_token_for_team(team, token):
+    if DISABLE_DATABASE:
+        return
     sql = """
         UPDATE mapping
         SET heroku = %s
@@ -274,6 +328,8 @@ def set_heroku_token_for_team(team, token):
 
 
 def _reset_mapping():
+    if DISABLE_DATABASE:
+        return
     with closing(get_connection()) as conn:
         try:
             cur = conn.cursor()
@@ -284,6 +340,8 @@ def _reset_mapping():
 
 
 def delete_from_mapping(team):
+    if DISABLE_DATABASE:
+        return
     with closing(get_connection()) as conn:
         try:
             cur = conn.cursor()
