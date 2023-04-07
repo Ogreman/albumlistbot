@@ -20,6 +20,7 @@ class Config(object):
     ALBUMLISTBOT_URL = os.environ.get('ALBUMLISTBOT_URL')
     ADD_TO_SLACK_URL = os.environ.get('ADD_TO_SLACK_URL')
     SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET')
+    DISABLE_DATABASE = bool(int(os.environ.get("DISABLE_DATABASE", "0")))
 
 
 class ProductionConfig(Config):

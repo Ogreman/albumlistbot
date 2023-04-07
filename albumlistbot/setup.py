@@ -27,6 +27,8 @@ def create_app():
         app.logger.addHandler(logging.StreamHandler(sys.stdout))
         app.logger.setLevel(logging.DEBUG)
     app.config.from_object(os.environ['APP_SETTINGS'])
+    if app.config["DISABLE_DATABASE"]:
+        app.logger.info(f'[app]: database disabled')
     add_blueprints(app)
     app.logger.debug(f'[app]: created with {os.environ["APP_SETTINGS"]}')
     return app
