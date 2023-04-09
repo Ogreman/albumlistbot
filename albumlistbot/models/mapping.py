@@ -106,6 +106,28 @@ def get_slack_token_for_team(team):
             return
 
 
+def get_team_app_by_slack(token):
+    if DISABLE_DATABASE:
+        inv_env = {os.environ[k]: k for k in os.environ}
+        team = inv_env[token].split("_")[0]
+        return (
+            team,
+            get_from_env(team, "app"),
+        )
+    sql = """
+        SELECT team, app
+        FROM mapping
+        WHERE token = %s;
+    """
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (token,))
+            return cur.fetchone()
+        except (psycopg2.ProgrammingError, psycopg2.InternalError) as e:
+            raise DatabaseError(e)
+
+
 def get_team_app_heroku_by_slack(token):
     if DISABLE_DATABASE:
         return
