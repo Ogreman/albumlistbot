@@ -50,7 +50,7 @@ def all_endpoints():
 @api_blueprint.route('/ping', methods=['GET'])
 def albumlist_wake():
     slack_token = flask.request.args['token']
-    if current_app.config["DISABLE_DATABASE"]:
+    if flask.current_app.config["DISABLE_DATABASE"]:
         team_id, app_url, heroku_token = (mapping.get_team_app_by_slack(slack_token), None)
     else:
         team_id, app_url, heroku_token = mapping.get_team_app_heroku_by_slack(slack_token)
